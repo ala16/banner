@@ -12,13 +12,16 @@ export default function Home() {
         </section>
 
         <div className="cidades">
-          <Link href="/atibaia" className="cidade">
+          <div className="cidade ativa">
             <div className="cidade-texto">
               <strong>Atibaia</strong>
               <span>Sindicato Rural de Atibaia</span>
             </div>
-            <span className="cidade-acao">Criar banner →</span>
-          </Link>
+            <div className="cidade-botoes">
+              <Link href="/atibaia" className="botao">+ Criar banner</Link>
+              <Link href="/historico?cidade=atibaia" className="botao secundario">Ver histórico</Link>
+            </div>
+          </div>
           <div className="cidade desativada" aria-disabled="true">
             <div className="cidade-texto">
               <strong>Bragança</strong>
