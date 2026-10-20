@@ -523,7 +523,6 @@ export default function AtibaiaPage() {
   function novoBanner() {
     const numero = Math.max(...banners.map((b) => b.numero)) + 1;
     setBanners((lista) => [...lista, { numero, inicial: PADRAO_ATIBAIA }]);
-    setTimeout(() => document.getElementById(`banner-${numero}`)?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
   function removerBanner(numero) {

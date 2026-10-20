@@ -481,3 +481,5 @@ input:focus, textarea:focus, select:focus {
 .opcao input { width: 18px; height: 18px; accent-color: var(--verde, #1f7a3d); margin: 0; }
 .opcao small { font-weight: 400; color: #6b7a70; }
 .formulario input:disabled { opacity: 0.5; }
+/* Criar outro banner não deve mover a tela: desliga a ancoragem de rolagem do navegador. */
+.banner-bloco, .acoes-pagina { overflow-anchor: none; }
