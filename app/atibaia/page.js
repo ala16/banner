@@ -90,8 +90,6 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
     const achados = preencherDoTexto(textoRapido, locais);
     setDados((d) => ({ ...d, ...achados }));
     setResultadoRapido(Object.keys(achados));
-    // A descrição sai sozinha pela IA quando o texto não trouxe uma.
-    if (achados.curso && !achados.descricao) gerarDescricao(achados.curso);
   }
 
   useEffect(() => {
