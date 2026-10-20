@@ -476,3 +476,7 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 .lista-cursos-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
 .lista-cursos h2 { margin: 0; font-size: 1.05rem; color: var(--verde-escuro, #0b4d33); }
 .lista-cursos textarea { width: 100%; box-sizing: border-box; font: inherit; line-height: 1.6; padding: 12px; border: 1px solid #dfe8e2; border-radius: 10px; background: #f7faf8; resize: vertical; }
+.opcao { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.opcao input { width: 18px; height: 18px; accent-color: var(--verde, #1f7a3d); margin: 0; }
+.opcao small { font-weight: 400; color: #6b7a70; }
+.formulario input:disabled { opacity: 0.5; }

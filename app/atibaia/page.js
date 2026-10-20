@@ -321,11 +321,20 @@ function EditorBanner({ numero, inicial, edicao, assets, locais, onLocaisChange,
                 {erroIA.descricao && <small className="texto-erro">{erroIA.descricao}</small>}
               </div>
               <div className="linha linha-4">
-                <Campo nome="vagas" rotulo="Vagas" type="number" min="1" inputMode="numeric" placeholder="16" {...campo} />
-                <Campo nome="idade" rotulo="Idade mín." type="number" min="0" inputMode="numeric" {...campo} />
+                <Campo nome="vagas" rotulo="Vagas" type="number" min="1" inputMode="numeric" placeholder="16" disabled={dados.ocultarVagasIdade} {...campo} />
+                <Campo nome="idade" rotulo="Idade mín." type="number" min="0" inputMode="numeric" disabled={dados.ocultarVagasIdade} {...campo} />
                 <Campo nome="telefone" rotulo="Telefone" inputMode="tel" {...campo} />
                 <Campo nome="link" rotulo="Link" {...campo} />
               </div>
+              <label className="opcao">
+                <input
+                  type="checkbox"
+                  checked={!dados.ocultarVagasIdade}
+                  onChange={(e) => setDados((d) => ({ ...d, ocultarVagasIdade: !e.target.checked }))}
+                />
+                Mostrar vagas e idade no banner
+                <small>(desmarcado, fica só "CURSO GRATUITO")</small>
+              </label>
             </fieldset>
 
             <fieldset className="secao">
