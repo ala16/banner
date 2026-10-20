@@ -405,3 +405,12 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
   .marca img { width: 32px; height: 32px; }
   .menu a, .menu button { padding: 8px 8px; font-size: 0.88rem; }
 }
+
+/* Preenchimento rápido */
+.secao.rapido { border-color: var(--lima); background: linear-gradient(180deg, #f3faee, var(--superficie)); }
+.rapido-acoes { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.rapido-acoes .botao { flex-shrink: 0; }
+.rapido-acoes small { color: var(--texto-suave); font-size: 0.8rem; }
+@media (max-width: 520px) {
+  .rapido-acoes { flex-direction: column; align-items: stretch; }
+}

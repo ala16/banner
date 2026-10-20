@@ -7,6 +7,17 @@ import Cabecalho from "../Cabecalho";
 import { desenharBannerAtibaia, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, LOCAIS_PADRAO, salvarLocais } from "@/lib/locaisAtibaia";
 import { CHAVE_REUTILIZAR } from "@/lib/cidades";
+import { preencherDoTexto } from "@/lib/preenchimentoRapido";
+
+const NOMES_CAMPOS = {
+  curso: "curso",
+  descricao: "descrição",
+  datas: "datas",
+  horario: "horário",
+  local: "local",
+  vagas: "vagas",
+  idade: "idade",
+};
 
 function carregarImagem(src) {
   return new Promise((resolve, reject) => {
@@ -72,6 +83,14 @@ export default function AtibaiaPage() {
   const [nomeFoto, setNomeFoto] = useState("");
   const [arrastando, setArrastando] = useState(false);
   const inputFotoRef = useRef(null);
+  const [textoRapido, setTextoRapido] = useState("");
+  const [resultadoRapido, setResultadoRapido] = useState(null);
+
+  function preencherRapido() {
+    const achados = preencherDoTexto(textoRapido, locais);
+    setDados((d) => ({ ...d, ...achados }));
+    setResultadoRapido(Object.keys(achados));
+  }
 
   useEffect(() => setLocais(carregarLocais()), []);
 
@@ -134,6 +153,8 @@ export default function AtibaiaPage() {
     setDados(PADRAO_ATIBAIA);
     removerFoto();
     setStatusHistorico(null);
+    setTextoRapido("");
+    setResultadoRapido(null);
   }
 
   function baixar() {
@@ -194,6 +215,34 @@ export default function AtibaiaPage() {
 
         <div className="editor">
           <form className="formulario" onSubmit={(e) => e.preventDefault()}>
+            <fieldset className="secao rapido">
+              <legend>Preenchimento rápido</legend>
+              <textarea
+                id="texto-rapido"
+                aria-label="Texto para preenchimento rápido"
+                rows={3}
+                value={textoRapido}
+                placeholder="Ex.: artesanato em argila - utilitários e decorativos, dias 03, 04, 05, 27 e 28/11 na Jessica"
+                onChange={(e) => setTextoRapido(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && textoRapido.trim()) preencherRapido();
+                }}
+              />
+              <div className="rapido-acoes">
+                <button type="button" className="botao" onClick={preencherRapido} disabled={!textoRapido.trim()}>
+                  Preencher campos
+                </button>
+                <small>Reconhece curso, datas, local salvo, vagas, idade e horário. Confira e corrija abaixo.</small>
+              </div>
+              {resultadoRapido && (
+                <p className={`aviso ${resultadoRapido.length ? "ok" : "erro"}`} role="status">
+                  {resultadoRapido.length
+                    ? `Preenchido: ${resultadoRapido.map((c) => NOMES_CAMPOS[c]).join(", ")}.`
+                    : "Não reconheci nenhum dado nesse texto."}
+                </p>
+              )}
+            </fieldset>
+
             <fieldset className="secao">
               <legend>Curso</legend>
               <Campo nome="curso" rotulo="Nome do curso" placeholder="Turismo pedagógico no meio rural" {...campo} />
@@ -206,10 +255,8 @@ export default function AtibaiaPage() {
 
             <fieldset className="secao">
               <legend>Quando e onde</legend>
-              <div className="linha">
-                <Campo nome="datas" rotulo="Data(s)" placeholder="1, 2, 7 e 8 de outubro" {...campo} />
-                <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
-              </div>
+              <Campo nome="datas" rotulo="Data(s)" placeholder="1, 2, 7 e 8 de outubro" {...campo} />
+              <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
               <div className="campo">
                 <label htmlFor="local-salvo">Local</label>
                 <div className="local-escolha">
