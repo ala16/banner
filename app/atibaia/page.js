@@ -6,6 +6,7 @@ import { montserrat } from "../fonts";
 import SairButton from "../SairButton";
 import { desenharBannerAtibaia, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, LOCAIS_PADRAO, salvarLocais } from "@/lib/locaisAtibaia";
+import { CHAVE_REUTILIZAR } from "@/lib/cidades";
 
 function carregarImagem(src) {
   return new Promise((resolve, reject) => {
@@ -20,7 +21,7 @@ const CAMPOS = [
   { nome: "curso", rotulo: "Nome do curso", placeholder: "Turismo pedagógico no meio rural" },
   { nome: "descricao", rotulo: "Descrição curta", placeholder: "Aprende-se a planejar viagens escolares educativas no campo.", multilinha: true },
   { nome: "datas", rotulo: "Data(s)", placeholder: "1, 2, 7 e 8 de outubro" },
-  { nome: "horario", rotulo: "Horário (opcional)", placeholder: "8h00 às 17h00" },
+  { nome: "horario", rotulo: "Horário", placeholder: "8h00 às 17h00" },
 ];
 
 function LocaisSalvos({ locais, onChange, onFechar }) {
@@ -63,7 +64,20 @@ export default function AtibaiaPage() {
   const [locais, setLocais] = useState([]);
   const [editandoLocais, setEditandoLocais] = useState(false);
 
+  const [statusHistorico, setStatusHistorico] = useState("");
+
   useEffect(() => setLocais(carregarLocais()), []);
+
+  // Vindo do histórico com "Reutilizar dados": preenche o formulário com o banner escolhido.
+  useEffect(() => {
+    try {
+      const salvo = sessionStorage.getItem(CHAVE_REUTILIZAR);
+      if (salvo) {
+        sessionStorage.removeItem(CHAVE_REUTILIZAR);
+        setDados({ ...PADRAO_ATIBAIA, ...JSON.parse(salvo) });
+      }
+    } catch {}
+  }, []);
 
   function atualizarLocais(novos) {
     setLocais(novos);
@@ -108,13 +122,37 @@ export default function AtibaiaPage() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+    const arquivo = `atibaia-${nome || "banner"}.png`;
     canvasRef.current.toBlob((blob) => {
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `atibaia-${nome || "banner"}.png`;
+      a.download = arquivo;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      salvarNoHistorico(blob, arquivo);
     }, "image/png");
+  }
+
+  async function salvarNoHistorico(png, arquivo) {
+    setStatusHistorico("Salvando no histórico...");
+    // O Vercel aceita no máximo ~4,5 MB por envio; PNG muito grande vai como JPEG.
+    let imagem = png;
+    if (png.size > 4 * 1024 * 1024) {
+      imagem = await new Promise((r) => canvasRef.current.toBlob(r, "image/jpeg", 0.92));
+      arquivo = arquivo.replace(/\.png$/, ".jpg");
+    }
+    const form = new FormData();
+    form.append("cidade", "atibaia");
+    form.append("imagem", imagem, arquivo);
+    form.append("arquivo", arquivo);
+    form.append("dados", JSON.stringify(dados));
+    try {
+      const res = await fetch("/api/historico", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      setStatusHistorico(res.ok ? "Salvo no histórico." : `Não salvou no histórico: ${data.erro || res.status}`);
+    } catch {
+      setStatusHistorico("Não salvou no histórico: erro de conexão.");
+    }
   }
 
   return (
@@ -209,6 +247,8 @@ export default function AtibaiaPage() {
             <button className="botao" type="button" onClick={baixar} disabled={!assets}>
               Baixar banner (PNG)
             </button>
+            <Link className="botao secundario" href="/historico?cidade=atibaia">Ver histórico</Link>
+            {statusHistorico && <span className="status">{statusHistorico}</span>}
           </div>
         </div>
       </div>

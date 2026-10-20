@@ -160,3 +160,30 @@ select {
 .local-item .botao { justify-self: end; padding: 6px 12px; font-size: 0.85rem; }
 .acoes-locais { display: flex; flex-wrap: wrap; gap: 8px; }
 .acoes-locais .botao { padding: 8px 14px; }
+
+.preview .acoes { align-items: center; }
+.status { color: #5b6b5b; font-size: 0.9rem; }
+
+/* Histórico */
+.abas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.abas .botao.secundario[aria-current="page"] { background: var(--verde); color: #fff; border-color: var(--verde); }
+.historico {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.historico-item {
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.historico-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.historico-item .info { padding: 10px 12px; flex: 1; }
+.historico-item .info strong { display: block; }
+.historico-item .info small { color: #5b6b5b; }
+.historico-item .botoes { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px; }
+.historico-item .botoes .botao { padding: 6px 10px; font-size: 0.85rem; }
+.botao.perigo { color: var(--erro); }

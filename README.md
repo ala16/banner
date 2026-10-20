@@ -21,3 +21,7 @@ npm install
 echo "SENHA_ACESSO=minhasenha" > .env.local
 npm run dev
 ```
+
+## Histórico
+
+Cada banner baixado é salvo no Vercel Blob (`historico/<cidade>/`), com a imagem e os dados do formulário. A página `/historico` lista os banners por cidade, com opções de baixar, reutilizar os dados e apagar. Requer a variável `BLOB_READ_WRITE_TOKEN`, criada automaticamente quando um Blob Store é conectado ao projeto.

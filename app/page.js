@@ -6,7 +6,10 @@ export default function Home() {
     <main className="container">
       <div className="topo">
         <h1>Escolha a cidade</h1>
-        <SairButton />
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/historico" className="botao secundario">Histórico</Link>
+          <SairButton />
+        </div>
       </div>
       <div className="cidades">
         <Link href="/atibaia" className="cidade">
