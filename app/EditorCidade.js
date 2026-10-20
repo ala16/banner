@@ -532,6 +532,9 @@ function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocai
   );
 }
 
+// Banners salvos antes da opção existir mostravam vagas e idade.
+const antigos = (dados) => ("ocultarVagasIdade" in dados ? {} : { ocultarVagasIdade: false });
+
 export default function EditorCidade({ modelo }) {
   const [assets, setAssets] = useState(null);
   const [locais, setLocais] = useState([]);
@@ -574,7 +577,7 @@ export default function EditorCidade({ modelo }) {
         // "Editar" traz { dados, edicao }; "Reutilizar dados" traz só { dados }.
         const { dados, edicao } = JSON.parse(salvo);
         // Chave nova para o editor recomeçar com os dados reaproveitados.
-        setBanners([{ numero: 1, chave: "reutilizado", inicial: { ...modelo.padrao, ...dados }, edicao }]);
+        setBanners([{ numero: 1, chave: "reutilizado", inicial: { ...modelo.padrao, ...dados, ...antigos(dados) }, edicao }]);
       }
     } catch {}
   }, []);
