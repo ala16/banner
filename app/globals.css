@@ -414,3 +414,25 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 @media (max-width: 520px) {
   .rapido-acoes { flex-direction: column; align-items: stretch; }
 }
+
+/* Botões de IA */
+.rotulo-com-acao { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.rotulo-com-acao label { margin: 0; }
+.botao-ia {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  background: #eef7ea;
+  border: 1px solid #cfe6c5;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.botao-ia:hover { background: #e1f1d9; }
+.botao-ia:disabled { opacity: 0.5; cursor: not-allowed; }
+.imagem-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 10px; }
+.imagem-acoes .link-acao { margin-top: 0; }
+.campo small.texto-erro { color: var(--erro); font-weight: 600; }
+.dica-pequena { display: block; margin-top: 6px; color: var(--texto-suave); font-size: 0.8rem; }

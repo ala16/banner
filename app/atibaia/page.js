@@ -142,6 +142,47 @@ export default function AtibaiaPage() {
       .finally(() => URL.revokeObjectURL(url));
   }
 
+  const [gerandoDescricao, setGerandoDescricao] = useState(false);
+  const [gerandoImagem, setGerandoImagem] = useState(false);
+  const [erroIA, setErroIA] = useState({});
+
+  async function chamarIA(rota, corpo) {
+    const res = await fetch(rota, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.erro || `Erro ${res.status}`);
+    return data;
+  }
+
+  async function gerarDescricao() {
+    setGerandoDescricao(true);
+    setErroIA((e) => ({ ...e, descricao: "" }));
+    try {
+      const { descricao } = await chamarIA("/api/ia/descricao", { curso: dados.curso });
+      setDados((d) => ({ ...d, descricao }));
+    } catch (err) {
+      setErroIA((e) => ({ ...e, descricao: err.message }));
+    }
+    setGerandoDescricao(false);
+  }
+
+  async function gerarImagem() {
+    setGerandoImagem(true);
+    setErroIA((e) => ({ ...e, imagem: "" }));
+    try {
+      const { imagem } = await chamarIA("/api/ia/imagem", { curso: dados.curso, descricao: dados.descricao });
+      setFoto(await carregarImagem(imagem));
+      setNomeFoto("Imagem gerada com IA");
+      if (inputFotoRef.current) inputFotoRef.current.value = "";
+    } catch (err) {
+      setErroIA((e) => ({ ...e, imagem: err.message }));
+    }
+    setGerandoImagem(false);
+  }
+
   function removerFoto() {
     setFoto(null);
     setNomeFoto("");
@@ -246,7 +287,22 @@ export default function AtibaiaPage() {
             <fieldset className="secao">
               <legend>Curso</legend>
               <Campo nome="curso" rotulo="Nome do curso" placeholder="Turismo pedagógico no meio rural" {...campo} />
-              <Campo nome="descricao" rotulo="Descrição curta" multilinha placeholder="Aprende-se a planejar viagens escolares educativas no campo." dica="Uma ou duas frases. Aparece no quadro azul." {...campo} />
+              <div className="campo">
+                <div className="rotulo-com-acao">
+                  <label htmlFor="descricao">Descrição curta</label>
+                  <button
+                    type="button"
+                    className="botao-ia"
+                    onClick={gerarDescricao}
+                    disabled={gerandoDescricao || !dados.curso.trim()}
+                    title={dados.curso.trim() ? "Criar descrição a partir do nome do curso" : "Preencha o nome do curso primeiro"}
+                  >
+                    {gerandoDescricao ? "Gerando..." : "✨ Gerar com IA"}
+                  </button>
+                </div>
+                <textarea id="descricao" name="descricao" rows={2} value={dados.descricao} onChange={alterar} placeholder="Aprende-se a planejar viagens escolares educativas no campo." />
+                {erroIA.descricao ? <small className="texto-erro">{erroIA.descricao}</small> : <small>Até 8 palavras. Aparece no quadro azul.</small>}
+              </div>
               <div className="linha">
                 <Campo nome="vagas" rotulo="Vagas" type="number" min="1" inputMode="numeric" placeholder="16" {...campo} />
                 <Campo nome="idade" rotulo="Idade mínima" type="number" min="0" inputMode="numeric" {...campo} />
@@ -335,9 +391,21 @@ export default function AtibaiaPage() {
                   </>
                 )}
               </label>
-              {foto && (
-                <button type="button" className="link-acao perigo" onClick={removerFoto}>Remover imagem</button>
-              )}
+              <div className="imagem-acoes">
+                <button
+                  type="button"
+                  className="botao secundario"
+                  onClick={gerarImagem}
+                  disabled={gerandoImagem || !dados.curso.trim()}
+                >
+                  {gerandoImagem ? "Gerando imagem (até 1 min)..." : "✨ Gerar imagem com IA"}
+                </button>
+                {foto && (
+                  <button type="button" className="link-acao perigo" onClick={removerFoto}>Remover imagem</button>
+                )}
+              </div>
+              {!dados.curso.trim() && <small className="dica-pequena">Preencha o nome do curso para gerar com IA.</small>}
+              {erroIA.imagem && <p className="aviso erro">{erroIA.imagem}</p>}
             </fieldset>
           </form>
 
