@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Cabecalho from "./Cabecalho";
+import { CIDADES } from "@/lib/cidades";
 
 export default function Home() {
   return (
@@ -12,22 +13,18 @@ export default function Home() {
         </section>
 
         <div className="cidades">
-          <div className="cidade ativa">
-            <div className="cidade-texto">
-              <strong>Atibaia</strong>
-              <span>Sindicato Rural de Atibaia</span>
+          {CIDADES.map((c) => (
+            <div className="cidade ativa" key={c.id}>
+              <div className="cidade-texto">
+                <strong>{c.nome}</strong>
+                <span>{c.sindicato}</span>
+              </div>
+              <div className="cidade-botoes">
+                <Link href={`/${c.id}`} className="botao">+ Criar banner</Link>
+                <Link href={`/historico?cidade=${c.id}`} className="botao secundario">Ver histórico</Link>
+              </div>
             </div>
-            <div className="cidade-botoes">
-              <Link href="/atibaia" className="botao">+ Criar banner</Link>
-              <Link href="/historico?cidade=atibaia" className="botao secundario">Ver histórico</Link>
-            </div>
-          </div>
-          <div className="cidade desativada" aria-disabled="true">
-            <div className="cidade-texto">
-              <strong>Bragança</strong>
-              <span>Em breve</span>
-            </div>
-          </div>
+          ))}
           <div className="cidade desativada" aria-disabled="true">
             <div className="cidade-texto">
               <strong>Outro</strong>
