@@ -483,3 +483,9 @@ input:focus, textarea:focus, select:focus {
 .formulario input:disabled { opacity: 0.5; }
 /* Criar outro banner não deve mover a tela: desliga a ancoragem de rolagem do navegador. */
 .banner-bloco, .acoes-pagina { overflow-anchor: none; }
+.parceiros { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.parceiro { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; background: #fff; }
+.parceiro.marcado { border-color: var(--verde); background: #eef7ea; }
+.parceiro input { width: 16px; height: 16px; margin: 0; accent-color: var(--verde, #1f7a3d); flex-shrink: 0; }
+.parceiro img { width: 34px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.apoio-texto { margin-top: 8px; width: 100%; }

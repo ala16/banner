@@ -7,6 +7,7 @@ import Cabecalho from "./Cabecalho";
 import ListaCursos from "./ListaCursos";
 import { TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, salvarLocais } from "@/lib/locais";
+import { PARCEIROS } from "@/lib/parceiros";
 import { CHAVE_REUTILIZAR } from "@/lib/cidades";
 import { preencherDoTexto } from "@/lib/preenchimentoRapido";
 
@@ -131,7 +132,9 @@ function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocai
   useEffect(() => {
     if (!assets || !canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
-    modelo.desenhar(ctx, { ...assets, foto, dados });
+    // Na ordem do modelo, não na ordem em que foram marcados.
+    const parceiros = modelo.parceiros.filter((id) => dados.parceiros?.includes(id)).map((id) => assets.parceiros[id]);
+    modelo.desenhar(ctx, { ...assets, foto, dados, parceiros });
   }, [modelo, assets, foto, dados]);
 
   const alterar = (e) => setDados((d) => ({ ...d, [e.target.name]: e.target.value }));
@@ -401,6 +404,52 @@ function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocai
             </fieldset>
 
             <fieldset className="secao">
+              <legend>Logos de parceiros{modelo.apoio ? " e apoio" : ""}</legend>
+              <div className="parceiros">
+                {modelo.parceiros.map((id) => (
+                  <label key={id} className={`parceiro${dados.parceiros?.includes(id) ? " marcado" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={dados.parceiros?.includes(id) || false}
+                      onChange={(e) =>
+                        setDados((d) => ({
+                          ...d,
+                          parceiros: e.target.checked
+                            ? [...(d.parceiros || []), id]
+                            : (d.parceiros || []).filter((p) => p !== id),
+                        }))
+                      }
+                    />
+                    <img src={PARCEIROS[id].src} alt="" />
+                    <span>{PARCEIROS[id].nome}</span>
+                  </label>
+                ))}
+              </div>
+              {modelo.apoio && (
+                <>
+                  <label className="opcao">
+                    <input
+                      type="checkbox"
+                      checked={dados.mostrarApoio || false}
+                      onChange={(e) => setDados((d) => ({ ...d, mostrarApoio: e.target.checked }))}
+                    />
+                    Incluir texto de apoio
+                  </label>
+                  {dados.mostrarApoio && (
+                    <input
+                      id={`${p}apoio`}
+                      name="apoio"
+                      aria-label="Texto de apoio"
+                      className="apoio-texto"
+                      value={dados.apoio}
+                      onChange={alterar}
+                    />
+                  )}
+                </>
+              )}
+            </fieldset>
+
+            <fieldset className="secao">
               <legend>Imagem do curso</legend>
               <div className="imagem-linha">
               <label
@@ -529,11 +578,12 @@ export default function EditorCidade({ modelo }) {
     Promise.all([
       carregarImagem(modelo.imagens.fundo),
       modelo.imagens.logos ? carregarImagem(modelo.imagens.logos) : null,
+      Promise.all(modelo.parceiros.map((id) => carregarImagem(PARCEIROS[id].src).then((img) => [id, img]))),
       // Falha ao carregar fonte não deve travar o gerador: cai na fonte reserva.
       ...[500, 600, 700, 800, 900].map((peso) =>
         document.fonts.load(`${peso} 40px ${familia}`).catch(() => {})
       ),
-    ]).then(([fundo, logos]) => setAssets({ fundo, logos, familia }));
+    ]).then(([fundo, logos, parceiros]) => setAssets({ fundo, logos, familia, parceiros: Object.fromEntries(parceiros) }));
   }, [modelo]);
 
   function atualizarLocais(novos) {
