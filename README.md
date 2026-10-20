@@ -26,7 +26,7 @@ npm run dev
 
 Cada banner baixado é salvo no Vercel Blob (`historico/<cidade>/`), com a imagem e os dados do formulário. A página `/historico` lista os banners por cidade, com opções de baixar, reutilizar os dados e apagar. Requer a variável `BLOB_READ_WRITE_TOKEN`, criada automaticamente quando um Blob Store é conectado ao projeto.
 
-## IA
+## IA (gratuita)
 
-- **Descrição curta (até 8 palavras):** gerada pelo Claude a partir do nome do curso. Requer `ANTHROPIC_API_KEY`.
-- **Imagem do curso:** gerada pela OpenAI (`gpt-image-1`) a partir do nome e da descrição. Requer `OPENAI_API_KEY`.
+- **Descrição curta (até 8 palavras):** Gemini (`gemini-flash-latest`) pelo plano gratuito do Google AI Studio. Requer `GEMINI_API_KEY` (crie em https://aistudio.google.com/apikey).
+- **Imagem do curso:** Pollinations, gratuito e sem chave. `POLLINATIONS_TOKEN` é opcional e tira a fila e a marca d'água.
