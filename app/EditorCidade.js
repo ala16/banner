@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { montserrat } from "./fonts";
+import { montserrat, tinos } from "./fonts";
 import Cabecalho from "./Cabecalho";
 import ListaCursos from "./ListaCursos";
 import { TAMANHO } from "@/lib/bannerAtibaia";
@@ -332,6 +332,13 @@ function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocai
                   {erroIA.descricao && <small className="texto-erro">{erroIA.descricao}</small>}
                 </div>
               )}
+              {modelo.telefones && (
+                <div className="linha">
+                  {modelo.telefones.map((t) => (
+                    <Campo key={t.nome} nome={t.nome} rotulo={t.rotulo} inputMode="tel" {...campo} />
+                  ))}
+                </div>
+              )}
               {modelo.campos.vagasIdade && modelo.campos.contato && (
                 <>
                   <div className="linha linha-4">
@@ -583,7 +590,8 @@ export default function EditorCidade({ modelo }) {
       ...[500, 600, 700, 800, 900].map((peso) =>
         document.fonts.load(`${peso} 40px ${familia}`).catch(() => {})
       ),
-    ]).then(([fundo, logos, parceiros]) => setAssets({ fundo, logos, familia, parceiros: Object.fromEntries(parceiros) }));
+      document.fonts.load(`700 40px ${tinos.style.fontFamily}`).catch(() => {}),
+    ]).then(([fundo, logos, parceiros]) => setAssets({ fundo, logos, familia, familiaSerif: tinos.style.fontFamily, parceiros: Object.fromEntries(parceiros) }));
   }, [modelo]);
 
   function atualizarLocais(novos) {
