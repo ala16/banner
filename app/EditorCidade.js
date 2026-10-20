@@ -9,7 +9,7 @@ import { TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, salvarLocais } from "@/lib/locais";
 import { PARCEIROS } from "@/lib/parceiros";
 import { CHAVE_REUTILIZAR } from "@/lib/cidades";
-import { preencherDoTexto } from "@/lib/preenchimentoRapido";
+import { preencherDoTexto, separarCursos } from "@/lib/preenchimentoRapido";
 
 const NOMES_CAMPOS = {
   curso: "curso",
@@ -20,6 +20,17 @@ const NOMES_CAMPOS = {
   vagas: "vagas",
   idade: "idade",
 };
+
+// Lê um curso do texto e devolve só os campos que este modelo mostra no formulário.
+function lerCurso(modelo, texto, locais) {
+  const achados = preencherDoTexto(texto, locais);
+  if (!modelo.campos.descricao) delete achados.descricao;
+  if (!modelo.campos.vagasIdade) {
+    delete achados.vagas;
+    delete achados.idade;
+  }
+  return achados;
+}
 
 function baixarArquivo(blob, nome) {
   const a = document.createElement("a");
@@ -82,7 +93,7 @@ function LocaisSalvos({ locais, padrao, onChange, onFechar }) {
 }
 
 // Um banner completo: formulário, prévia e download. A página pode ter vários.
-function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocaisChange, onRemover, registrar, onCurso }) {
+function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locais, onLocaisChange, onRemover, registrar, onCurso }) {
   const canvasRef = useRef(null);
   const [dados, setDados] = useState(inicial);
   const [foto, setFoto] = useState(null);
@@ -98,16 +109,13 @@ function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocai
   const [textoRapido, setTextoRapido] = useState("");
   const [resultadoRapido, setResultadoRapido] = useState(null);
 
+  // Com um curso por linha, o primeiro fica neste banner e os outros viram banners novos.
   function preencherRapido() {
-    const achados = preencherDoTexto(textoRapido, locais);
-    // Só usa o que este modelo mostra no formulário.
-    if (!modelo.campos.descricao) delete achados.descricao;
-    if (!modelo.campos.vagasIdade) {
-      delete achados.vagas;
-      delete achados.idade;
-    }
+    const [primeiro = "", ...outros] = separarCursos(textoRapido);
+    const achados = lerCurso(modelo, primeiro, locais);
     setDados((d) => ({ ...d, ...achados }));
-    setResultadoRapido(Object.keys(achados));
+    setResultadoRapido({ campos: Object.keys(achados), novos: outros.length });
+    if (outros.length) onVarios(outros);
   }
 
   // Editando do histórico: recorta a foto do próprio banner salvo.
@@ -300,13 +308,15 @@ function EditorBanner({ modelo, numero, inicial, edicao, assets, locais, onLocai
                 <button type="button" className="botao" onClick={preencherRapido} disabled={!textoRapido.trim()}>
                   Preencher campos
                 </button>
-                <small>Reconhece curso, datas, local{modelo.campos.vagasIdade ? ", vagas, idade" : ""} e horário.</small>
+                <small>Reconhece curso, datas, local{modelo.campos.vagasIdade ? ", vagas, idade" : ""} e horário. Vários cursos, um por linha, viram vários banners.</small>
               </div>
               {resultadoRapido && (
-                <p className={`aviso ${resultadoRapido.length ? "ok" : "erro"}`} role="status">
-                  {resultadoRapido.length
-                    ? `Preenchido: ${resultadoRapido.map((c) => NOMES_CAMPOS[c]).join(", ")}.`
+                <p className={`aviso ${resultadoRapido.campos.length ? "ok" : "erro"}`} role="status">
+                  {resultadoRapido.campos.length
+                    ? `Preenchido: ${resultadoRapido.campos.map((c) => NOMES_CAMPOS[c]).join(", ")}.`
                     : "Não reconheci nenhum dado nesse texto."}
+                  {resultadoRapido.novos > 0 &&
+                    ` Criei mais ${resultadoRapido.novos} ${resultadoRapido.novos > 1 ? "banners" : "banner"} abaixo com os outros cursos.`}
                 </p>
               )}
             </fieldset>
@@ -602,6 +612,17 @@ export default function EditorCidade({ modelo }) {
     salvarLocais(modelo.id, novos);
   }
 
+  function criarVarios(textos) {
+    setBanners((lista) => {
+      let numero = Math.max(...lista.map((b) => b.numero));
+      const novos = textos.map((texto) => ({
+        numero: ++numero,
+        inicial: { ...modelo.padrao, ...lerCurso(modelo, texto, locais) },
+      }));
+      return [...lista, ...novos];
+    });
+  }
+
   function novoBanner() {
     const numero = Math.max(...banners.map((b) => b.numero)) + 1;
     setBanners((lista) => [...lista, { numero, inicial: modelo.padrao }]);
@@ -625,6 +646,7 @@ export default function EditorCidade({ modelo }) {
         {banners.map((b) => (
           <EditorBanner
             modelo={modelo}
+            onVarios={criarVarios}
             key={b.chave || b.numero}
             numero={b.numero}
             inicial={b.inicial}
