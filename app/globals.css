@@ -472,3 +472,7 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 .acoes-pagina { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: stretch; }
 .acoes-pagina .baixar-todos { width: auto; padding: 0 28px; border-radius: 16px; }
 @media (max-width: 600px) { .acoes-pagina { grid-template-columns: 1fr; } .acoes-pagina .baixar-todos { padding: 18px; } }
+.lista-cursos { margin-top: 28px; padding: 18px; background: #fff; border: 1px solid #dfe8e2; border-radius: 16px; }
+.lista-cursos-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.lista-cursos h2 { margin: 0; font-size: 1.05rem; color: var(--verde-escuro, #0b4d33); }
+.lista-cursos textarea { width: 100%; box-sizing: border-box; font: inherit; line-height: 1.6; padding: 12px; border: 1px solid #dfe8e2; border-radius: 10px; background: #f7faf8; resize: vertical; }

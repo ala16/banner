@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Cabecalho from "../Cabecalho";
+import ListaCursos from "../ListaCursos";
 import { CHAVE_REUTILIZAR, CIDADES } from "@/lib/cidades";
 
 const formatarData = (iso) =>
@@ -112,6 +113,8 @@ export default function HistoricoPage() {
           </div>
         ))}
       </div>
+
+      {itens?.length > 0 && <ListaCursos titulo="Cursos gerados" cursos={itens.map((i) => i.dados.curso || "")} />}
     </main>
     </>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { montserrat } from "../fonts";
 import Cabecalho from "../Cabecalho";
+import ListaCursos from "../ListaCursos";
 import { desenharBannerAtibaia, FOTO, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, LOCAIS_PADRAO, salvarLocais } from "@/lib/locaisAtibaia";
 import { CHAVE_REUTILIZAR } from "@/lib/cidades";
@@ -80,7 +81,7 @@ function LocaisSalvos({ locais, onChange, onFechar }) {
 }
 
 // Um banner completo: formulário, prévia e download. A página pode ter vários.
-function EditorBanner({ numero, inicial, edicao, assets, locais, onLocaisChange, onRemover, registrar }) {
+function EditorBanner({ numero, inicial, edicao, assets, locais, onLocaisChange, onRemover, registrar, onCurso }) {
   const canvasRef = useRef(null);
   const [dados, setDados] = useState(inicial);
   const [foto, setFoto] = useState(null);
@@ -223,6 +224,7 @@ function EditorBanner({ numero, inicial, edicao, assets, locais, onLocaisChange,
     return { blob, arquivo };
   };
   useEffect(() => registrar(numero, () => exportarRef.current()), [numero, registrar]);
+  useEffect(() => onCurso(numero, dados.curso), [numero, dados.curso, onCurso]);
 
   async function salvarNoHistorico(png, arquivo) {
     setStatusHistorico({ tipo: "info", texto: "Salvando no histórico..." });
@@ -450,6 +452,8 @@ export default function AtibaiaPage() {
   const [banners, setBanners] = useState([{ numero: 1, inicial: PADRAO_ATIBAIA }]);
   const [baixandoTodos, setBaixandoTodos] = useState(false);
   const exportadores = useRef(new Map());
+  const [cursos, setCursos] = useState({});
+  const aoMudarCurso = useCallback((numero, curso) => setCursos((c) => ({ ...c, [numero]: curso })), []);
 
   const registrar = useCallback((numero, exportar) => {
     exportadores.current.set(numero, exportar);
@@ -535,6 +539,7 @@ export default function AtibaiaPage() {
             inicial={b.inicial}
             edicao={b.edicao}
             registrar={registrar}
+            onCurso={aoMudarCurso}
             assets={assets}
             locais={locais}
             onLocaisChange={atualizarLocais}
@@ -550,6 +555,8 @@ export default function AtibaiaPage() {
             {baixandoTodos ? "Preparando..." : `Baixar todos (${banners.length}) em .zip`}
           </button>
         </div>
+
+        <ListaCursos titulo="Cursos desta página" cursos={banners.map((b) => cursos[b.numero] || "")} />
       </main>
     </>
   );
