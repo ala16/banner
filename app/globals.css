@@ -467,3 +467,8 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 .preview .acoes-secundarias { margin-top: 6px; }
 .formulario .linha-4 { grid-template-columns: 0.7fr 0.8fr 1.3fr 1.5fr; }
 @media (max-width: 1100px) { .formulario .linha-4 { grid-template-columns: 1fr 1fr; } }
+
+.selo { margin-left: 10px; padding: 2px 10px; border-radius: 999px; background: #fff4d6; color: #8a5a00; font-size: 0.75rem; font-weight: 700; vertical-align: middle; }
+.acoes-pagina { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: stretch; }
+.acoes-pagina .baixar-todos { width: auto; padding: 0 28px; border-radius: 16px; }
+@media (max-width: 600px) { .acoes-pagina { grid-template-columns: 1fr; } .acoes-pagina .baixar-todos { padding: 18px; } }

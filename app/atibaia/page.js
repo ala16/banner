@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { montserrat } from "../fonts";
 import Cabecalho from "../Cabecalho";
-import { desenharBannerAtibaia, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
+import { desenharBannerAtibaia, FOTO, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, LOCAIS_PADRAO, salvarLocais } from "@/lib/locaisAtibaia";
 import { CHAVE_REUTILIZAR } from "@/lib/cidades";
 import { preencherDoTexto } from "@/lib/preenchimentoRapido";
@@ -18,6 +18,14 @@ const NOMES_CAMPOS = {
   vagas: "vagas",
   idade: "idade",
 };
+
+function baixarArquivo(blob, nome) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
 
 function carregarImagem(src) {
   return new Promise((resolve, reject) => {
@@ -72,10 +80,12 @@ function LocaisSalvos({ locais, onChange, onFechar }) {
 }
 
 // Um banner completo: formulário, prévia e download. A página pode ter vários.
-function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemover }) {
+function EditorBanner({ numero, inicial, edicao, assets, locais, onLocaisChange, onRemover, registrar }) {
   const canvasRef = useRef(null);
   const [dados, setDados] = useState(inicial);
   const [foto, setFoto] = useState(null);
+  // Item do histórico que este banner atualiza ao baixar (editado, ou já salvo uma vez).
+  const historicoRef = useRef(edicao ? { id: edicao.id, criadoEm: edicao.criadoEm } : null);
   const [editandoLocais, setEditandoLocais] = useState(false);
   const p = `b${numero}-`;
 
@@ -91,6 +101,24 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
     setDados((d) => ({ ...d, ...achados }));
     setResultadoRapido(Object.keys(achados));
   }
+
+  // Editando do histórico: recorta a foto do próprio banner salvo.
+  useEffect(() => {
+    if (!edicao?.imagemUrl) return;
+    carregarImagem(`/api/historico/imagem?url=${encodeURIComponent(edicao.imagemUrl)}`)
+      .then((banner) => {
+        const escala = banner.width / TAMANHO;
+        const recorte = document.createElement("canvas");
+        recorte.width = Math.round(FOTO.w * escala);
+        recorte.height = Math.round(FOTO.h * escala);
+        recorte
+          .getContext("2d")
+          .drawImage(banner, FOTO.x * escala, FOTO.y * escala, recorte.width, recorte.height, 0, 0, recorte.width, recorte.height);
+        setFoto(recorte);
+        setNomeFoto("Imagem do banner salvo");
+      })
+      .catch(() => {});
+  }, [edicao]);
 
   useEffect(() => {
     if (!assets || !canvasRef.current) return;
@@ -167,23 +195,34 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
     setResultadoRapido(null);
   }
 
-  function baixar() {
+  function nomeArquivo() {
     const nome = (dados.curso || "banner")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-    const arquivo = `atibaia-${nome || "banner"}.png`;
-    canvasRef.current.toBlob((blob) => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = arquivo;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      salvarNoHistorico(blob, arquivo);
-    }, "image/png");
+    return `atibaia-${nome || "banner"}.png`;
   }
+
+  const gerarPng = () => new Promise((r) => canvasRef.current.toBlob(r, "image/png"));
+
+  async function baixar() {
+    const arquivo = nomeArquivo();
+    const blob = await gerarPng();
+    baixarArquivo(blob, arquivo);
+    salvarNoHistorico(blob, arquivo);
+  }
+
+  // Usado pelo "Baixar todos" da página; sempre lê o estado mais recente.
+  const exportarRef = useRef(null);
+  exportarRef.current = async () => {
+    const arquivo = nomeArquivo();
+    const blob = await gerarPng();
+    salvarNoHistorico(blob, arquivo);
+    return { blob, arquivo };
+  };
+  useEffect(() => registrar(numero, () => exportarRef.current()), [numero, registrar]);
 
   async function salvarNoHistorico(png, arquivo) {
     setStatusHistorico({ tipo: "info", texto: "Salvando no histórico..." });
@@ -198,12 +237,18 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
     form.append("imagem", imagem, arquivo);
     form.append("arquivo", arquivo);
     form.append("dados", JSON.stringify(dados));
+    if (historicoRef.current) {
+      form.append("id", historicoRef.current.id);
+      form.append("criadoEm", historicoRef.current.criadoEm);
+    }
+    const atualizando = Boolean(historicoRef.current);
     try {
       const res = await fetch("/api/historico", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
+      if (res.ok && data.item) historicoRef.current = { id: data.item.id, criadoEm: data.item.criadoEm };
       setStatusHistorico(
         res.ok
-          ? { tipo: "ok", texto: "Banner baixado e salvo no histórico." }
+          ? { tipo: "ok", texto: atualizando ? "Banner baixado e atualizado no histórico." : "Banner baixado e salvo no histórico." }
           : { tipo: "erro", texto: `Banner baixado, mas não salvou no histórico: ${data.erro || res.status}` }
       );
     } catch {
@@ -216,7 +261,10 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
   return (
     <section className="banner-bloco" id={`banner-${numero}`}>
       <div className="banner-bloco-topo">
-        <h2>Banner {numero}{dados.curso.trim() ? ` · ${dados.curso.trim()}` : ""}</h2>
+        <h2>
+          Banner {numero}{dados.curso.trim() ? ` · ${dados.curso.trim()}` : ""}
+          {edicao && <span className="selo">Editando do histórico</span>}
+        </h2>
         {onRemover && (
           <button type="button" className="link-acao perigo" onClick={onRemover}>Remover este banner</button>
         )}
@@ -400,6 +448,30 @@ export default function AtibaiaPage() {
   const [assets, setAssets] = useState(null);
   const [locais, setLocais] = useState([]);
   const [banners, setBanners] = useState([{ numero: 1, inicial: PADRAO_ATIBAIA }]);
+  const [baixandoTodos, setBaixandoTodos] = useState(false);
+  const exportadores = useRef(new Map());
+
+  const registrar = useCallback((numero, exportar) => {
+    exportadores.current.set(numero, exportar);
+    return () => exportadores.current.delete(numero);
+  }, []);
+
+  async function baixarTodos() {
+    setBaixandoTodos(true);
+    try {
+      const { default: JSZip } = await import("jszip");
+      const zip = new JSZip();
+      for (const [i, b] of banners.entries()) {
+        const exportar = exportadores.current.get(b.numero);
+        if (!exportar) continue;
+        const { blob, arquivo } = await exportar();
+        zip.file(`${String(i + 1).padStart(2, "0")}-${arquivo}`, blob);
+      }
+      baixarArquivo(await zip.generateAsync({ type: "blob" }), "banners-atibaia.zip");
+    } finally {
+      setBaixandoTodos(false);
+    }
+  }
 
   useEffect(() => setLocais(carregarLocais()), []);
 
@@ -409,8 +481,10 @@ export default function AtibaiaPage() {
       const salvo = sessionStorage.getItem(CHAVE_REUTILIZAR);
       if (salvo) {
         sessionStorage.removeItem(CHAVE_REUTILIZAR);
+        // "Editar" traz { dados, edicao }; "Reutilizar dados" traz só { dados }.
+        const { dados, edicao } = JSON.parse(salvo);
         // Chave nova para o editor recomeçar com os dados reaproveitados.
-        setBanners([{ numero: 1, chave: "reutilizado", inicial: { ...PADRAO_ATIBAIA, ...JSON.parse(salvo) } }]);
+        setBanners([{ numero: 1, chave: "reutilizado", inicial: { ...PADRAO_ATIBAIA, ...dados }, edicao }]);
       }
     } catch {}
   }, []);
@@ -459,6 +533,8 @@ export default function AtibaiaPage() {
             key={b.chave || b.numero}
             numero={b.numero}
             inicial={b.inicial}
+            edicao={b.edicao}
+            registrar={registrar}
             assets={assets}
             locais={locais}
             onLocaisChange={atualizarLocais}
@@ -466,9 +542,14 @@ export default function AtibaiaPage() {
           />
         ))}
 
-        <button type="button" className="novo-banner" onClick={novoBanner}>
-          + Criar outro banner
-        </button>
+        <div className="acoes-pagina">
+          <button type="button" className="novo-banner" onClick={novoBanner}>
+            + Criar outro banner
+          </button>
+          <button type="button" className="botao grande baixar-todos" onClick={baixarTodos} disabled={!assets || baixandoTodos}>
+            {baixandoTodos ? "Preparando..." : `Baixar todos (${banners.length}) em .zip`}
+          </button>
+        </div>
       </main>
     </>
   );

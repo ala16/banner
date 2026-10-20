@@ -39,9 +39,12 @@ export default function HistoricoPage() {
     window.history.replaceState(null, "", `/historico?cidade=${id}`);
   }
 
-  function reutilizar(item) {
+  function abrirNoEditor(item, editar) {
+    const valor = editar
+      ? { dados: item.dados, edicao: { id: item.id, criadoEm: item.criadoEm, imagemUrl: item.imagem } }
+      : { dados: item.dados };
     try {
-      sessionStorage.setItem(CHAVE_REUTILIZAR, JSON.stringify(item.dados));
+      sessionStorage.setItem(CHAVE_REUTILIZAR, JSON.stringify(valor));
     } catch {}
     window.location.href = `/${item.cidade}`;
   }
@@ -98,11 +101,12 @@ export default function HistoricoPage() {
             </a>
             <div className="info">
               <strong>{item.dados.curso || "(sem nome)"}</strong>
-              <small>{item.dados.datas ? `${item.dados.datas} · ` : ""}criado em {formatarData(item.criadoEm)}</small>
+              <small>{item.dados.datas ? `${item.dados.datas} · ` : ""}criado em {formatarData(item.criadoEm)}{item.atualizadoEm ? ` · editado em ${formatarData(item.atualizadoEm)}` : ""}</small>
             </div>
             <div className="botoes">
               <a className="botao" href={`${item.imagem}?download=1`}>Baixar</a>
-              <button type="button" className="botao secundario" onClick={() => reutilizar(item)}>Reutilizar dados</button>
+              <button type="button" className="botao secundario" onClick={() => abrirNoEditor(item, true)}>Editar</button>
+              <button type="button" className="botao secundario" onClick={() => abrirNoEditor(item, false)} title="Abre um banner novo com estes dados">Duplicar</button>
               <button type="button" className="botao secundario perigo" onClick={() => apagar(item)}>Apagar</button>
             </div>
           </div>

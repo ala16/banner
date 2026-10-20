@@ -58,8 +58,16 @@ export async function POST(request) {
     return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
   }
 
-  const criadoEm = new Date().toISOString();
-  const id = `${Date.now()}`;
+  // Com "id", atualiza um banner do histórico (editado): troca os arquivos e mantém a data de criação.
+  const idExistente = String(form.get("id") || "");
+  const atualizando = /^\d+$/.test(idExistente);
+  const agora = new Date().toISOString();
+  const id = atualizando ? idExistente : `${Date.now()}`;
+  const criadoEm = atualizando ? form.get("criadoEm") || agora : agora;
+  if (atualizando) {
+    const antigos = await listarTudo(`historico/${cidade}/${id}`);
+    if (antigos.length) await del(antigos.map((b) => b.url));
+  }
   const extensao = imagem.type === "image/jpeg" ? "jpg" : "png";
   const opcoes = { access: "public", addRandomSuffix: true };
 
@@ -67,7 +75,7 @@ export async function POST(request) {
     ...opcoes,
     contentType: imagem.type,
   });
-  const item = { id, cidade, criadoEm, dados, imagem: blobImagem.url, arquivo: form.get("arquivo") || `banner.${extensao}` };
+  const item = { id, cidade, criadoEm, dados, imagem: blobImagem.url, arquivo: form.get("arquivo") || `banner.${extensao}`, ...(atualizando && { atualizadoEm: agora }) };
   await put(`historico/${cidade}/${id}.json`, JSON.stringify(item), {
     ...opcoes,
     contentType: "application/json",
