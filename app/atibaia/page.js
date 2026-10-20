@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { montserrat } from "../fonts";
-import SairButton from "../SairButton";
+import Cabecalho from "../Cabecalho";
 import { desenharBannerAtibaia, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, LOCAIS_PADRAO, salvarLocais } from "@/lib/locaisAtibaia";
 import { CHAVE_REUTILIZAR } from "@/lib/cidades";
@@ -17,12 +17,16 @@ function carregarImagem(src) {
   });
 }
 
-const CAMPOS = [
-  { nome: "curso", rotulo: "Nome do curso", placeholder: "Turismo pedagógico no meio rural" },
-  { nome: "descricao", rotulo: "Descrição curta", placeholder: "Aprende-se a planejar viagens escolares educativas no campo.", multilinha: true },
-  { nome: "datas", rotulo: "Data(s)", placeholder: "1, 2, 7 e 8 de outubro" },
-  { nome: "horario", rotulo: "Horário", placeholder: "8h00 às 17h00" },
-];
+function Campo({ nome, rotulo, dica, multilinha, dados, onChange, ...props }) {
+  const Tag = multilinha ? "textarea" : "input";
+  return (
+    <div className="campo">
+      <label htmlFor={nome}>{rotulo}</label>
+      <Tag id={nome} name={nome} value={dados[nome]} onChange={onChange} rows={multilinha ? 2 : undefined} {...props} />
+      {dica && <small>{dica}</small>}
+    </div>
+  );
+}
 
 function LocaisSalvos({ locais, onChange, onFechar }) {
   const alterar = (i, campo, valor) =>
@@ -64,7 +68,10 @@ export default function AtibaiaPage() {
   const [locais, setLocais] = useState([]);
   const [editandoLocais, setEditandoLocais] = useState(false);
 
-  const [statusHistorico, setStatusHistorico] = useState("");
+  const [statusHistorico, setStatusHistorico] = useState(null);
+  const [nomeFoto, setNomeFoto] = useState("");
+  const [arrastando, setArrastando] = useState(false);
+  const inputFotoRef = useRef(null);
 
   useEffect(() => setLocais(carregarLocais()), []);
 
@@ -105,14 +112,28 @@ export default function AtibaiaPage() {
 
   const alterar = (e) => setDados((d) => ({ ...d, [e.target.name]: e.target.value }));
 
-  function escolherFoto(e) {
-    const arquivo = e.target.files?.[0];
-    if (!arquivo) {
-      setFoto(null);
-      return;
-    }
+  function usarFoto(arquivo) {
+    if (!arquivo || !arquivo.type.startsWith("image/")) return;
     const url = URL.createObjectURL(arquivo);
-    carregarImagem(url).then(setFoto).finally(() => URL.revokeObjectURL(url));
+    carregarImagem(url)
+      .then((img) => {
+        setFoto(img);
+        setNomeFoto(arquivo.name);
+      })
+      .finally(() => URL.revokeObjectURL(url));
+  }
+
+  function removerFoto() {
+    setFoto(null);
+    setNomeFoto("");
+    if (inputFotoRef.current) inputFotoRef.current.value = "";
+  }
+
+  function limpar() {
+    if (!confirm("Limpar todos os campos e a imagem?")) return;
+    setDados(PADRAO_ATIBAIA);
+    removerFoto();
+    setStatusHistorico(null);
   }
 
   function baixar() {
@@ -134,7 +155,7 @@ export default function AtibaiaPage() {
   }
 
   async function salvarNoHistorico(png, arquivo) {
-    setStatusHistorico("Salvando no histórico...");
+    setStatusHistorico({ tipo: "info", texto: "Salvando no histórico..." });
     // O Vercel aceita no máximo ~4,5 MB por envio; PNG muito grande vai como JPEG.
     let imagem = png;
     if (png.size > 4 * 1024 * 1024) {
@@ -149,109 +170,151 @@ export default function AtibaiaPage() {
     try {
       const res = await fetch("/api/historico", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
-      setStatusHistorico(res.ok ? "Salvo no histórico." : `Não salvou no histórico: ${data.erro || res.status}`);
+      setStatusHistorico(
+        res.ok
+          ? { tipo: "ok", texto: "Banner baixado e salvo no histórico." }
+          : { tipo: "erro", texto: `Banner baixado, mas não salvou no histórico: ${data.erro || res.status}` }
+      );
     } catch {
-      setStatusHistorico("Não salvou no histórico: erro de conexão.");
+      setStatusHistorico({ tipo: "erro", texto: "Banner baixado, mas não salvou no histórico (erro de conexão)." });
     }
   }
 
+  const campo = { dados, onChange: alterar };
+
   return (
-    <main className="container">
-      <div className="topo">
-        <h1>
-          <Link href="/" style={{ textDecoration: "none" }}>←</Link> Banner Atibaia
-        </h1>
-        <SairButton />
-      </div>
+    <>
+      <Cabecalho />
+      <main className="container">
+        <div className="titulo-pagina">
+          <Link href="/" className="voltar">← Cidades</Link>
+          <h1>Banner de Atibaia</h1>
+          <p>Preencha os dados e veja a prévia do banner na hora.</p>
+        </div>
 
-      <div className="editor">
-        <form className="card" onSubmit={(e) => e.preventDefault()}>
-          {CAMPOS.map((c) => (
-            <div className="campo" key={c.nome}>
-              <label htmlFor={c.nome}>{c.rotulo}</label>
-              {c.multilinha ? (
-                <textarea id={c.nome} name={c.nome} rows={2} value={dados[c.nome]} placeholder={c.placeholder} onChange={alterar} />
-              ) : (
-                <input id={c.nome} name={c.nome} value={dados[c.nome]} placeholder={c.placeholder} onChange={alterar} />
-              )}
-            </div>
-          ))}
+        <div className="editor">
+          <form className="formulario" onSubmit={(e) => e.preventDefault()}>
+            <fieldset className="secao">
+              <legend>Curso</legend>
+              <Campo nome="curso" rotulo="Nome do curso" placeholder="Turismo pedagógico no meio rural" {...campo} />
+              <Campo nome="descricao" rotulo="Descrição curta" multilinha placeholder="Aprende-se a planejar viagens escolares educativas no campo." dica="Uma ou duas frases. Aparece no quadro azul." {...campo} />
+              <div className="linha">
+                <Campo nome="vagas" rotulo="Vagas" type="number" min="1" inputMode="numeric" placeholder="16" {...campo} />
+                <Campo nome="idade" rotulo="Idade mínima" type="number" min="0" inputMode="numeric" {...campo} />
+              </div>
+            </fieldset>
 
-          <div className="campo">
-            <label htmlFor="local-salvo">Local</label>
-            <div className="local-escolha">
-              <select
-                id="local-salvo"
-                value={locais.findIndex((l) => l.endereco === dados.local)}
-                onChange={(e) => {
-                  const local = locais[Number(e.target.value)];
-                  if (local) setDados((d) => ({ ...d, local: local.endereco }));
+            <fieldset className="secao">
+              <legend>Quando e onde</legend>
+              <div className="linha">
+                <Campo nome="datas" rotulo="Data(s)" placeholder="1, 2, 7 e 8 de outubro" {...campo} />
+                <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
+              </div>
+              <div className="campo">
+                <label htmlFor="local-salvo">Local</label>
+                <div className="local-escolha">
+                  <select
+                    id="local-salvo"
+                    value={locais.findIndex((l) => l.endereco === dados.local)}
+                    onChange={(e) => {
+                      const local = locais[Number(e.target.value)];
+                      if (local) setDados((d) => ({ ...d, local: local.endereco }));
+                    }}
+                  >
+                    <option value={-1}>Escolha um local salvo…</option>
+                    {locais.map((l, i) => (
+                      <option key={i} value={i}>{l.nome || "(sem nome)"}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="botao secundario" onClick={() => setEditandoLocais((v) => !v)}>
+                    {editandoLocais ? "Fechar" : "Editar locais"}
+                  </button>
+                </div>
+                {editandoLocais && (
+                  <LocaisSalvos locais={locais} onChange={atualizarLocais} onFechar={() => setEditandoLocais(false)} />
+                )}
+                <textarea
+                  id="local"
+                  name="local"
+                  aria-label="Endereço do local"
+                  rows={3}
+                  value={dados.local}
+                  placeholder="Escolha acima ou digite o endereço"
+                  onChange={alterar}
+                  className="local-endereco"
+                />
+              </div>
+            </fieldset>
+
+            <fieldset className="secao">
+              <legend>Inscrições</legend>
+              <div className="linha">
+                <Campo nome="telefone" rotulo="Telefone" inputMode="tel" {...campo} />
+                <Campo nome="link" rotulo="Link" {...campo} />
+              </div>
+            </fieldset>
+
+            <fieldset className="secao">
+              <legend>Imagem do curso</legend>
+              <label
+                className={`upload${arrastando ? " arrastando" : ""}${foto ? " com-foto" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setArrastando(true);
+                }}
+                onDragLeave={() => setArrastando(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setArrastando(false);
+                  usarFoto(e.dataTransfer.files?.[0]);
                 }}
               >
-                <option value={-1}>Escolha um local salvo…</option>
-                {locais.map((l, i) => (
-                  <option key={i} value={i}>{l.nome || "(sem nome)"}</option>
-                ))}
-              </select>
-              <button type="button" className="botao secundario" onClick={() => setEditandoLocais((v) => !v)}>
-                Editar locais
+                <input
+                  ref={inputFotoRef}
+                  id="foto"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => usarFoto(e.target.files?.[0])}
+                />
+                {foto ? (
+                  <>
+                    <strong>{nomeFoto}</strong>
+                    <span>Clique para trocar</span>
+                  </>
+                ) : (
+                  <>
+                    <strong>Clique ou arraste uma imagem aqui</strong>
+                    <span>Imagens em pé (retrato) ficam melhores</span>
+                  </>
+                )}
+              </label>
+              {foto && (
+                <button type="button" className="link-acao perigo" onClick={removerFoto}>Remover imagem</button>
+              )}
+            </fieldset>
+          </form>
+
+          <aside className="preview">
+            <div className="preview-moldura">
+              {!assets && <div className="carregando">Carregando modelo...</div>}
+              <canvas ref={canvasRef} width={TAMANHO} height={TAMANHO} />
+            </div>
+            <div className="acoes">
+              <button className="botao grande" type="button" onClick={baixar} disabled={!assets || !dados.curso.trim()}>
+                Baixar banner
               </button>
+              <div className="acoes-secundarias">
+                <Link className="link-acao" href="/historico?cidade=atibaia">Ver histórico</Link>
+                <button type="button" className="link-acao" onClick={limpar}>Limpar campos</button>
+              </div>
+              {!dados.curso.trim() && <p className="dica">Preencha o nome do curso para baixar.</p>}
+              {statusHistorico && (
+                <p className={`aviso ${statusHistorico.tipo}`} role="status">{statusHistorico.texto}</p>
+              )}
             </div>
-            {editandoLocais && (
-              <LocaisSalvos locais={locais} onChange={atualizarLocais} onFechar={() => setEditandoLocais(false)} />
-            )}
-            <textarea
-              id="local"
-              name="local"
-              aria-label="Endereço do local"
-              rows={3}
-              value={dados.local}
-              placeholder="Escolha acima ou digite o endereço"
-              onChange={alterar}
-              style={{ marginTop: 8 }}
-            />
-          </div>
-
-          <div className="linha">
-            <div className="campo">
-              <label htmlFor="vagas">Vagas</label>
-              <input id="vagas" name="vagas" type="number" min="1" value={dados.vagas} placeholder="16" onChange={alterar} />
-            </div>
-            <div className="campo">
-              <label htmlFor="idade">Idade mínima</label>
-              <input id="idade" name="idade" type="number" min="0" value={dados.idade} onChange={alterar} />
-            </div>
-          </div>
-
-          <div className="linha">
-            <div className="campo">
-              <label htmlFor="telefone">Telefone</label>
-              <input id="telefone" name="telefone" value={dados.telefone} onChange={alterar} />
-            </div>
-            <div className="campo">
-              <label htmlFor="link">Link</label>
-              <input id="link" name="link" value={dados.link} onChange={alterar} />
-            </div>
-          </div>
-
-          <div className="campo">
-            <label htmlFor="foto">Imagem do curso</label>
-            <input id="foto" type="file" accept="image/*" onChange={escolherFoto} />
-            <small>Aparece no quadro à direita. Imagens em pé (retrato) ficam melhores.</small>
-          </div>
-        </form>
-
-        <div className="preview">
-          <canvas ref={canvasRef} width={TAMANHO} height={TAMANHO} />
-          <div className="acoes">
-            <button className="botao" type="button" onClick={baixar} disabled={!assets}>
-              Baixar banner (PNG)
-            </button>
-            <Link className="botao secundario" href="/historico?cidade=atibaia">Ver histórico</Link>
-            {statusHistorico && <span className="status">{statusHistorico}</span>}
-          </div>
+          </aside>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

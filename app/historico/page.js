@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import SairButton from "../SairButton";
+import Cabecalho from "../Cabecalho";
 import { CHAVE_REUTILIZAR, CIDADES } from "@/lib/cidades";
 
 const formatarData = (iso) =>
@@ -58,12 +58,12 @@ export default function HistoricoPage() {
   }
 
   return (
+    <>
+    <Cabecalho ativo="historico" />
     <main className="container">
-      <div className="topo">
-        <h1>
-          <Link href="/" style={{ textDecoration: "none" }}>←</Link> Histórico de banners
-        </h1>
-        <SairButton />
+      <div className="titulo-pagina">
+        <h1>Histórico de banners</h1>
+        <p>Todos os banners baixados ficam salvos aqui, separados por cidade.</p>
       </div>
 
       <nav className="abas">
@@ -80,9 +80,15 @@ export default function HistoricoPage() {
         ))}
       </nav>
 
-      {erro && <p className="erro">{erro}</p>}
-      {itens === null && <p>Carregando...</p>}
-      {itens?.length === 0 && !erro && <p>Nenhum banner salvo ainda. Os banners baixados aparecem aqui.</p>}
+      {erro && <p className="aviso erro">{erro}</p>}
+      {itens === null && <p className="dica">Carregando...</p>}
+      {itens?.length === 0 && !erro && (
+        <div className="vazio">
+          <strong>Nenhum banner salvo ainda</strong>
+          <p>Os banners que você baixar aparecem aqui.</p>
+          <Link className="botao" href={`/${cidade}`}>Criar banner</Link>
+        </div>
+      )}
 
       <div className="historico">
         {itens?.map((item) => (
@@ -103,5 +109,6 @@ export default function HistoricoPage() {
         ))}
       </div>
     </main>
+    </>
   );
 }

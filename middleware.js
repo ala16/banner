@@ -17,5 +17,5 @@ export async function middleware(request) {
 
 export const config = {
   // Tudo exige login, exceto a própria tela de login, a API de login e arquivos do Next.
-  matcher: ["/((?!login|api/login|_next/|favicon.ico).*)"],
+  matcher: ["/((?!login|api/login|_next/|favicon.ico|icon.png|apple-icon.png|logo.png|logo-icone.png).*)"],
 };

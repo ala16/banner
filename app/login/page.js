@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function LoginPage() {
   const [senha, setSenha] = useState("");
+  const [mostrar, setMostrar] = useState(false);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
@@ -31,21 +32,27 @@ export default function LoginPage() {
 
   return (
     <main className="login">
-      <form className="card" onSubmit={entrar}>
-        <h1>Gerador de Banners</h1>
+      <form className="login-card" onSubmit={entrar}>
+        <img src="/logo.png" alt="SENAR Banners" width="200" height="200" className="login-logo" />
+        <p className="login-sub">Gerador de banners de cursos</p>
         <div className="campo">
-          <label htmlFor="senha">Senha</label>
-          <input
-            id="senha"
-            type="password"
-            autoFocus
-            autoComplete="current-password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-          />
+          <label htmlFor="senha">Senha de acesso</label>
+          <div className="senha">
+            <input
+              id="senha"
+              type={mostrar ? "text" : "password"}
+              autoFocus
+              autoComplete="current-password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+            />
+            <button type="button" className="ver-senha" onClick={() => setMostrar((v) => !v)}>
+              {mostrar ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
         </div>
-        {erro && <p className="erro">{erro}</p>}
-        <button className="botao" type="submit" disabled={carregando || !senha} style={{ width: "100%" }}>
+        {erro && <p className="aviso erro" role="alert">{erro}</p>}
+        <button className="botao grande" type="submit" disabled={carregando || !senha}>
           {carregando ? "Entrando..." : "Entrar"}
         </button>
       </form>
