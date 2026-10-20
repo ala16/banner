@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { montserrat } from "../fonts";
 import SairButton from "../SairButton";
 import { desenharBannerAtibaia, PADRAO_ATIBAIA, TAMANHO } from "@/lib/bannerAtibaia";
+import { carregarLocais, LOCAIS_PADRAO, salvarLocais } from "@/lib/locaisAtibaia";
 
 function carregarImagem(src) {
   return new Promise((resolve, reject) => {
@@ -20,14 +21,54 @@ const CAMPOS = [
   { nome: "descricao", rotulo: "Descrição curta", placeholder: "Aprende-se a planejar viagens escolares educativas no campo.", multilinha: true },
   { nome: "datas", rotulo: "Data(s)", placeholder: "1, 2, 7 e 8 de outubro" },
   { nome: "horario", rotulo: "Horário (opcional)", placeholder: "8h00 às 17h00" },
-  { nome: "local", rotulo: "Local", placeholder: "Secretaria da Agricultura - Estrada Municipal Juca Sanches, 400 - Atibaia - SP", multilinha: true },
 ];
+
+function LocaisSalvos({ locais, onChange, onFechar }) {
+  const alterar = (i, campo, valor) =>
+    onChange(locais.map((l, j) => (j === i ? { ...l, [campo]: valor } : l)));
+
+  return (
+    <div className="locais">
+      {locais.map((l, i) => (
+        <div className="local-item" key={i}>
+          <input aria-label="Nome do local" value={l.nome} placeholder="Nome" onChange={(e) => alterar(i, "nome", e.target.value)} />
+          <textarea aria-label="Endereço" rows={3} value={l.endereco} placeholder="Endereço" onChange={(e) => alterar(i, "endereco", e.target.value)} />
+          <button type="button" className="botao secundario" onClick={() => onChange(locais.filter((_, j) => j !== i))}>
+            Remover
+          </button>
+        </div>
+      ))}
+      <div className="acoes-locais">
+        <button type="button" className="botao secundario" onClick={() => onChange([...locais, { nome: "", endereco: "" }])}>
+          + Incluir local
+        </button>
+        <button
+          type="button"
+          className="botao secundario"
+          onClick={() => confirm("Voltar para a lista de locais padrão?") && onChange(LOCAIS_PADRAO)}
+        >
+          Restaurar padrões
+        </button>
+        <button type="button" className="botao" onClick={onFechar}>Concluir</button>
+      </div>
+    </div>
+  );
+}
 
 export default function AtibaiaPage() {
   const canvasRef = useRef(null);
   const [dados, setDados] = useState(PADRAO_ATIBAIA);
   const [assets, setAssets] = useState(null);
   const [foto, setFoto] = useState(null);
+  const [locais, setLocais] = useState([]);
+  const [editandoLocais, setEditandoLocais] = useState(false);
+
+  useEffect(() => setLocais(carregarLocais()), []);
+
+  function atualizarLocais(novos) {
+    setLocais(novos);
+    salvarLocais(novos);
+  }
 
   // Fundo, logos e fontes precisam estar carregados antes de desenhar.
   useEffect(() => {
@@ -63,7 +104,7 @@ export default function AtibaiaPage() {
   function baixar() {
     const nome = (dados.curso || "banner")
       .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
@@ -97,6 +138,41 @@ export default function AtibaiaPage() {
               )}
             </div>
           ))}
+
+          <div className="campo">
+            <label htmlFor="local-salvo">Local</label>
+            <div className="local-escolha">
+              <select
+                id="local-salvo"
+                value={locais.findIndex((l) => l.endereco === dados.local)}
+                onChange={(e) => {
+                  const local = locais[Number(e.target.value)];
+                  if (local) setDados((d) => ({ ...d, local: local.endereco }));
+                }}
+              >
+                <option value={-1}>Escolha um local salvo…</option>
+                {locais.map((l, i) => (
+                  <option key={i} value={i}>{l.nome || "(sem nome)"}</option>
+                ))}
+              </select>
+              <button type="button" className="botao secundario" onClick={() => setEditandoLocais((v) => !v)}>
+                Editar locais
+              </button>
+            </div>
+            {editandoLocais && (
+              <LocaisSalvos locais={locais} onChange={atualizarLocais} onFechar={() => setEditandoLocais(false)} />
+            )}
+            <textarea
+              id="local"
+              name="local"
+              aria-label="Endereço do local"
+              rows={3}
+              value={dados.local}
+              placeholder="Escolha acima ou digite o endereço"
+              onChange={alterar}
+              style={{ marginTop: 8 }}
+            />
+          </div>
 
           <div className="linha">
             <div className="campo">

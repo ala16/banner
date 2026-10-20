@@ -130,3 +130,33 @@ a.cidade:hover { border-color: var(--verde); }
   .editor { grid-template-columns: 1fr; }
   .linha { grid-template-columns: 1fr; }
 }
+
+/* Locais salvos */
+select {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 0;
+}
+.local-escolha { display: flex; gap: 8px; }
+.local-escolha select { flex: 1; }
+.local-escolha .botao { padding: 10px 12px; white-space: nowrap; }
+.locais {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  background: #fafcf9;
+}
+.local-item {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--borda);
+}
+.local-item .botao { justify-self: end; padding: 6px 12px; font-size: 0.85rem; }
+.acoes-locais { display: flex; flex-wrap: wrap; gap: 8px; }
+.acoes-locais .botao { padding: 8px 14px; }
