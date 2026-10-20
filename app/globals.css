@@ -248,8 +248,8 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 /* ---------- Editor ---------- */
 .editor {
   display: grid;
-  grid-template-columns: minmax(320px, 460px) 1fr;
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+  gap: 24px;
   align-items: start;
 }
 .formulario { display: grid; gap: 16px; }
@@ -320,7 +320,7 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 .secao .link-acao { margin-top: 8px; }
 
 /* A prévia cabe na tela junto com o botão de baixar. */
-.preview { position: sticky; top: 84px; width: min(100%, calc(100vh - 290px)); min-width: 360px; justify-self: center; }
+.preview { position: sticky; top: 84px; }
 .preview-moldura {
   position: relative;
   border-radius: 14px;
@@ -438,3 +438,32 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
   cursor: pointer;
 }
 .novo-banner:hover { background: #e1f1d9; }
+
+/* Formulário compacto: a coluna da esquerda acompanha a altura da prévia */
+.formulario { gap: 10px; }
+.formulario .secao { padding: 10px 14px 12px; border-radius: 12px; }
+.formulario .secao legend { margin-bottom: 6px; font-size: 0.72rem; }
+.formulario .campo, .formulario .linha .campo { margin-bottom: 8px; }
+.formulario .campo:last-child, .formulario .linha:last-child .campo { margin-bottom: 0; }
+.formulario label { font-size: 0.8rem; margin-bottom: 3px; }
+.formulario input, .formulario textarea, .formulario select { padding: 7px 10px; font-size: 0.9rem; border-radius: 8px; }
+.formulario .linha { gap: 10px; }
+.formulario .linha-datas { grid-template-columns: 3fr 2fr; }
+.formulario .local-escolha .botao { padding: 7px 10px; font-size: 0.85rem; }
+.formulario .local-endereco { margin-top: 6px; }
+.formulario .rotulo-com-acao { margin-bottom: 3px; }
+.formulario .botao-ia { padding: 3px 10px; font-size: 0.75rem; }
+.formulario .rapido-acoes { margin-top: 8px; }
+.formulario .rapido-acoes .botao { padding: 8px 14px; font-size: 0.9rem; }
+.formulario .aviso { margin-top: 8px; padding: 6px 10px; font-size: 0.82rem; }
+.imagem-linha { display: flex; gap: 10px; align-items: stretch; }
+.imagem-linha .upload { flex: 1; min-height: 0; padding: 8px 10px; gap: 0; }
+.imagem-linha .upload strong { font-size: 0.88rem; }
+.imagem-linha .upload span { font-size: 0.75rem; }
+.botao-gerar-imagem { flex-shrink: 0; padding: 8px 12px; font-size: 0.88rem; }
+.formulario .secao > .link-acao { margin-top: 6px; font-size: 0.82rem; }
+.preview .acoes { margin-top: 12px; }
+.preview .acoes .botao.grande { padding: 12px 20px; }
+.preview .acoes-secundarias { margin-top: 6px; }
+.formulario .linha-4 { grid-template-columns: 0.7fr 0.8fr 1.3fr 1.5fr; }
+@media (max-width: 1100px) { .formulario .linha-4 { grid-template-columns: 1fr 1fr; } }

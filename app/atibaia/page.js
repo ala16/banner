@@ -230,7 +230,7 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
               <textarea
                 id={`${p}texto-rapido`}
                 aria-label="Texto para preenchimento rápido"
-                rows={3}
+                rows={2}
                 value={textoRapido}
                 placeholder="Ex.: artesanato em argila - utilitários e decorativos, dias 03, 04, 05, 27 e 28/11 na Jessica"
                 onChange={(e) => setTextoRapido(e.target.value)}
@@ -242,7 +242,7 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
                 <button type="button" className="botao" onClick={preencherRapido} disabled={!textoRapido.trim()}>
                   Preencher campos
                 </button>
-                <small>Reconhece curso, datas, local salvo, vagas, idade e horário. Confira e corrija abaixo.</small>
+                <small>Reconhece curso, datas, local, vagas, idade e horário.</small>
               </div>
               {resultadoRapido && (
                 <p className={`aviso ${resultadoRapido.length ? "ok" : "erro"}`} role="status">
@@ -269,19 +269,23 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
                     {gerandoDescricao ? "Gerando..." : "✨ Gerar com IA"}
                   </button>
                 </div>
-                <textarea id={`${p}descricao`} name="descricao" rows={2} value={dados.descricao} onChange={alterar} placeholder="Aprende-se a planejar viagens escolares educativas no campo." />
-                {erroIA.descricao ? <small className="texto-erro">{erroIA.descricao}</small> : <small>Até 8 palavras. Aparece no quadro azul.</small>}
+                <input id={`${p}descricao`} name="descricao" value={dados.descricao} onChange={alterar} placeholder="Aprende-se a planejar viagens escolares educativas no campo." />
+                {erroIA.descricao && <small className="texto-erro">{erroIA.descricao}</small>}
               </div>
-              <div className="linha">
+              <div className="linha linha-4">
                 <Campo nome="vagas" rotulo="Vagas" type="number" min="1" inputMode="numeric" placeholder="16" {...campo} />
-                <Campo nome="idade" rotulo="Idade mínima" type="number" min="0" inputMode="numeric" {...campo} />
+                <Campo nome="idade" rotulo="Idade mín." type="number" min="0" inputMode="numeric" {...campo} />
+                <Campo nome="telefone" rotulo="Telefone" inputMode="tel" {...campo} />
+                <Campo nome="link" rotulo="Link" {...campo} />
               </div>
             </fieldset>
 
             <fieldset className="secao">
               <legend>Quando e onde</legend>
-              <Campo nome="datas" rotulo="Data(s)" placeholder="1, 2, 7 e 8 de outubro" {...campo} />
-              <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
+              <div className="linha linha-datas">
+                <Campo nome="datas" rotulo="Data(s)" placeholder="1, 2, 7 e 8 de outubro" {...campo} />
+                <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
+              </div>
               <div className="campo">
                 <label htmlFor={`${p}local-salvo`}>Local</label>
                 <div className="local-escolha">
@@ -309,7 +313,7 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
                   id={`${p}local`}
                   name="local"
                   aria-label="Endereço do local"
-                  rows={3}
+                  rows={2}
                   value={dados.local}
                   placeholder="Escolha acima ou digite o endereço"
                   onChange={alterar}
@@ -319,15 +323,8 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
             </fieldset>
 
             <fieldset className="secao">
-              <legend>Inscrições</legend>
-              <div className="linha">
-                <Campo nome="telefone" rotulo="Telefone" inputMode="tel" {...campo} />
-                <Campo nome="link" rotulo="Link" {...campo} />
-              </div>
-            </fieldset>
-
-            <fieldset className="secao">
               <legend>Imagem do curso</legend>
+              <div className="imagem-linha">
               <label
                 className={`upload${arrastando ? " arrastando" : ""}${foto ? " com-foto" : ""}`}
                 onDragOver={(e) => {
@@ -355,25 +352,24 @@ function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemov
                   </>
                 ) : (
                   <>
-                    <strong>Clique ou arraste uma imagem aqui</strong>
-                    <span>Imagens em pé (retrato) ficam melhores</span>
+                    <strong>Enviar imagem</strong>
+                    <span>Clique ou arraste (em pé fica melhor)</span>
                   </>
                 )}
               </label>
-              <div className="imagem-acoes">
                 <button
                   type="button"
-                  className="botao secundario"
+                  className="botao secundario botao-gerar-imagem"
                   onClick={gerarImagem}
                   disabled={gerandoImagem || !dados.curso.trim()}
+                  title={dados.curso.trim() ? "" : "Preencha o nome do curso primeiro"}
                 >
-                  {gerandoImagem ? "Gerando imagem (até 1 min)..." : "✨ Gerar imagem com IA"}
+                  {gerandoImagem ? "Gerando (até 1 min)..." : "✨ Gerar com IA"}
                 </button>
-                {foto && (
-                  <button type="button" className="link-acao perigo" onClick={removerFoto}>Remover imagem</button>
-                )}
               </div>
-              {!dados.curso.trim() && <small className="dica-pequena">Preencha o nome do curso para gerar com IA.</small>}
+              {foto && (
+                <button type="button" className="link-acao perigo" onClick={removerFoto}>Remover imagem</button>
+              )}
               {erroIA.imagem && <p className="aviso erro">{erroIA.imagem}</p>}
             </fieldset>
           </form>
