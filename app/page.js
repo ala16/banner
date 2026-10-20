@@ -13,7 +13,6 @@ export default function Home() {
 
         <div className="cidades">
           <Link href="/atibaia" className="cidade">
-            <img src="/atibaia/capa.jpg" alt="" className="cidade-capa" />
             <div className="cidade-texto">
               <strong>Atibaia</strong>
               <span>Sindicato Rural de Atibaia</span>
@@ -21,25 +20,18 @@ export default function Home() {
             <span className="cidade-acao">Criar banner →</span>
           </Link>
           <div className="cidade desativada" aria-disabled="true">
-            <div className="cidade-capa vazia" />
             <div className="cidade-texto">
               <strong>Bragança</strong>
               <span>Em breve</span>
             </div>
           </div>
           <div className="cidade desativada" aria-disabled="true">
-            <div className="cidade-capa vazia" />
             <div className="cidade-texto">
               <strong>Outro</strong>
               <span>Em breve</span>
             </div>
           </div>
         </div>
-
-        <Link href="/historico" className="atalho-historico">
-          <strong>Histórico de banners</strong>
-          <span>Veja, baixe de novo ou reaproveite banners já criados →</span>
-        </Link>
       </main>
     </>
   );

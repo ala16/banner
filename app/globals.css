@@ -237,29 +237,13 @@ input:focus, textarea:focus, select:focus {
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
 a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); box-shadow: 0 8px 24px rgba(11, 77, 51, 0.12); }
-.cidade-capa { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
-.cidade-capa.vazia { background: repeating-linear-gradient(45deg, #eef2ec, #eef2ec 10px, #e6ebe3 10px, #e6ebe3 20px); }
-.cidade-texto { padding: 16px 18px 4px; }
+.cidade-texto { padding: 22px 22px 4px; }
 .cidade-texto strong { display: block; font-size: 1.3rem; color: var(--verde-escuro); }
 .cidade-texto span { color: var(--texto-suave); font-size: 0.92rem; }
-.cidade-acao { padding: 8px 18px 18px; color: var(--verde); font-weight: 700; }
+.cidade-acao { padding: 8px 22px 22px; color: var(--verde); font-weight: 700; }
 .cidade.desativada { opacity: 0.6; box-shadow: none; }
-.cidade.desativada .cidade-texto { padding-bottom: 18px; }
+.cidade.desativada .cidade-texto { padding-bottom: 22px; }
 
-.atalho-historico {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 16px;
-  margin-top: 24px;
-  padding: 18px 20px;
-  border-radius: 14px;
-  background: var(--verde-escuro);
-  color: #fff;
-  text-decoration: none;
-}
-.atalho-historico span { color: #cfe8c4; }
-.atalho-historico:hover { background: #083b27; }
 
 /* ---------- Editor ---------- */
 .editor {
@@ -401,8 +385,7 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
   .intro h1, .titulo-pagina h1 { font-size: 1.4rem; }
   .linha { grid-template-columns: 1fr; gap: 0; }
   .marca { font-size: 1rem; gap: 8px; }
-  .cidade.desativada .cidade-capa { display: none; }
-  .marca img { width: 32px; height: 32px; }
+  .cidade.desativada   .marca img { width: 32px; height: 32px; }
   .menu a, .menu button { padding: 8px 8px; font-size: 0.88rem; }
 }
 
