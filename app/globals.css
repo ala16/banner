@@ -419,3 +419,22 @@ a.cidade:hover { transform: translateY(-2px); border-color: var(--verde-claro); 
 .imagem-acoes .link-acao { margin-top: 0; }
 .campo small.texto-erro { color: var(--erro); font-weight: 600; }
 .dica-pequena { display: block; margin-top: 6px; color: var(--texto-suave); font-size: 0.8rem; }
+
+/* Vários banners na mesma página */
+.banner-bloco { padding-bottom: 32px; margin-bottom: 32px; border-bottom: 2px dashed var(--borda); scroll-margin-top: 80px; }
+.banner-bloco-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.banner-bloco-topo h2 { margin: 0; font-size: 1.15rem; color: var(--verde-escuro); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.novo-banner {
+  display: block;
+  width: 100%;
+  padding: 22px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--verde-escuro);
+  background: #eef7ea;
+  border: 2px dashed var(--verde-claro);
+  border-radius: 16px;
+  cursor: pointer;
+}
+.novo-banner:hover { background: #e1f1d9; }

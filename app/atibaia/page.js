@@ -28,12 +28,12 @@ function carregarImagem(src) {
   });
 }
 
-function Campo({ nome, rotulo, dica, multilinha, dados, onChange, ...props }) {
+function Campo({ nome, rotulo, dica, multilinha, dados, onChange, prefixo = "", ...props }) {
   const Tag = multilinha ? "textarea" : "input";
   return (
     <div className="campo">
-      <label htmlFor={nome}>{rotulo}</label>
-      <Tag id={nome} name={nome} value={dados[nome]} onChange={onChange} rows={multilinha ? 2 : undefined} {...props} />
+      <label htmlFor={prefixo + nome}>{rotulo}</label>
+      <Tag id={prefixo + nome} name={nome} value={dados[nome]} onChange={onChange} rows={multilinha ? 2 : undefined} {...props} />
       {dica && <small>{dica}</small>}
     </div>
   );
@@ -71,13 +71,13 @@ function LocaisSalvos({ locais, onChange, onFechar }) {
   );
 }
 
-export default function AtibaiaPage() {
+// Um banner completo: formulário, prévia e download. A página pode ter vários.
+function EditorBanner({ numero, inicial, assets, locais, onLocaisChange, onRemover }) {
   const canvasRef = useRef(null);
-  const [dados, setDados] = useState(PADRAO_ATIBAIA);
-  const [assets, setAssets] = useState(null);
+  const [dados, setDados] = useState(inicial);
   const [foto, setFoto] = useState(null);
-  const [locais, setLocais] = useState([]);
   const [editandoLocais, setEditandoLocais] = useState(false);
+  const p = `b${numero}-`;
 
   const [statusHistorico, setStatusHistorico] = useState(null);
   const [nomeFoto, setNomeFoto] = useState("");
@@ -90,38 +90,9 @@ export default function AtibaiaPage() {
     const achados = preencherDoTexto(textoRapido, locais);
     setDados((d) => ({ ...d, ...achados }));
     setResultadoRapido(Object.keys(achados));
+    // A descrição sai sozinha pela IA quando o texto não trouxe uma.
+    if (achados.curso && !achados.descricao) gerarDescricao(achados.curso);
   }
-
-  useEffect(() => setLocais(carregarLocais()), []);
-
-  // Vindo do histórico com "Reutilizar dados": preenche o formulário com o banner escolhido.
-  useEffect(() => {
-    try {
-      const salvo = sessionStorage.getItem(CHAVE_REUTILIZAR);
-      if (salvo) {
-        sessionStorage.removeItem(CHAVE_REUTILIZAR);
-        setDados({ ...PADRAO_ATIBAIA, ...JSON.parse(salvo) });
-      }
-    } catch {}
-  }, []);
-
-  function atualizarLocais(novos) {
-    setLocais(novos);
-    salvarLocais(novos);
-  }
-
-  // Fundo, logos e fontes precisam estar carregados antes de desenhar.
-  useEffect(() => {
-    const familia = montserrat.style.fontFamily;
-    Promise.all([
-      carregarImagem("/atibaia/fundo.png"),
-      carregarImagem("/atibaia/logos.png"),
-      // Falha ao carregar fonte não deve travar o gerador: cai na fonte reserva.
-      ...[500, 600, 700, 800, 900].map((peso) =>
-        document.fonts.load(`${peso} 40px ${familia}`).catch(() => {})
-      ),
-    ]).then(([fundo, logos]) => setAssets({ fundo, logos, familia }));
-  }, []);
 
   useEffect(() => {
     if (!assets || !canvasRef.current) return;
@@ -157,11 +128,11 @@ export default function AtibaiaPage() {
     return data;
   }
 
-  async function gerarDescricao() {
+  async function gerarDescricao(curso = dados.curso) {
     setGerandoDescricao(true);
     setErroIA((e) => ({ ...e, descricao: "" }));
     try {
-      const { descricao } = await chamarIA("/api/ia/descricao", { curso: dados.curso });
+      const { descricao } = await chamarIA("/api/ia/descricao", { curso });
       setDados((d) => ({ ...d, descricao }));
     } catch (err) {
       setErroIA((e) => ({ ...e, descricao: err.message }));
@@ -242,24 +213,22 @@ export default function AtibaiaPage() {
     }
   }
 
-  const campo = { dados, onChange: alterar };
+  const campo = { dados, onChange: alterar, prefixo: p };
 
   return (
-    <>
-      <Cabecalho />
-      <main className="container">
-        <div className="titulo-pagina">
-          <Link href="/" className="voltar">← Cidades</Link>
-          <h1>Banner de Atibaia</h1>
-          <p>Preencha os dados e veja a prévia do banner na hora.</p>
-        </div>
-
+    <section className="banner-bloco" id={`banner-${numero}`}>
+      <div className="banner-bloco-topo">
+        <h2>Banner {numero}{dados.curso.trim() ? ` · ${dados.curso.trim()}` : ""}</h2>
+        {onRemover && (
+          <button type="button" className="link-acao perigo" onClick={onRemover}>Remover este banner</button>
+        )}
+      </div>
         <div className="editor">
           <form className="formulario" onSubmit={(e) => e.preventDefault()}>
             <fieldset className="secao rapido">
               <legend>Preenchimento rápido</legend>
               <textarea
-                id="texto-rapido"
+                id={`${p}texto-rapido`}
                 aria-label="Texto para preenchimento rápido"
                 rows={3}
                 value={textoRapido}
@@ -289,18 +258,18 @@ export default function AtibaiaPage() {
               <Campo nome="curso" rotulo="Nome do curso" placeholder="Turismo pedagógico no meio rural" {...campo} />
               <div className="campo">
                 <div className="rotulo-com-acao">
-                  <label htmlFor="descricao">Descrição curta</label>
+                  <label htmlFor={`${p}descricao`}>Descrição curta</label>
                   <button
                     type="button"
                     className="botao-ia"
-                    onClick={gerarDescricao}
+                    onClick={() => gerarDescricao()}
                     disabled={gerandoDescricao || !dados.curso.trim()}
                     title={dados.curso.trim() ? "Criar descrição a partir do nome do curso" : "Preencha o nome do curso primeiro"}
                   >
                     {gerandoDescricao ? "Gerando..." : "✨ Gerar com IA"}
                   </button>
                 </div>
-                <textarea id="descricao" name="descricao" rows={2} value={dados.descricao} onChange={alterar} placeholder="Aprende-se a planejar viagens escolares educativas no campo." />
+                <textarea id={`${p}descricao`} name="descricao" rows={2} value={dados.descricao} onChange={alterar} placeholder="Aprende-se a planejar viagens escolares educativas no campo." />
                 {erroIA.descricao ? <small className="texto-erro">{erroIA.descricao}</small> : <small>Até 8 palavras. Aparece no quadro azul.</small>}
               </div>
               <div className="linha">
@@ -314,10 +283,10 @@ export default function AtibaiaPage() {
               <Campo nome="datas" rotulo="Data(s)" placeholder="1, 2, 7 e 8 de outubro" {...campo} />
               <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
               <div className="campo">
-                <label htmlFor="local-salvo">Local</label>
+                <label htmlFor={`${p}local-salvo`}>Local</label>
                 <div className="local-escolha">
                   <select
-                    id="local-salvo"
+                    id={`${p}local-salvo`}
                     value={locais.findIndex((l) => l.endereco === dados.local)}
                     onChange={(e) => {
                       const local = locais[Number(e.target.value)];
@@ -334,10 +303,10 @@ export default function AtibaiaPage() {
                   </button>
                 </div>
                 {editandoLocais && (
-                  <LocaisSalvos locais={locais} onChange={atualizarLocais} onFechar={() => setEditandoLocais(false)} />
+                  <LocaisSalvos locais={locais} onChange={onLocaisChange} onFechar={() => setEditandoLocais(false)} />
                 )}
                 <textarea
-                  id="local"
+                  id={`${p}local`}
                   name="local"
                   aria-label="Endereço do local"
                   rows={3}
@@ -374,7 +343,7 @@ export default function AtibaiaPage() {
               >
                 <input
                   ref={inputFotoRef}
-                  id="foto"
+                  id={`${p}foto`}
                   type="file"
                   accept="image/*"
                   onChange={(e) => usarFoto(e.target.files?.[0])}
@@ -429,6 +398,83 @@ export default function AtibaiaPage() {
             </div>
           </aside>
         </div>
+    </section>
+  );
+}
+
+export default function AtibaiaPage() {
+  const [assets, setAssets] = useState(null);
+  const [locais, setLocais] = useState([]);
+  const [banners, setBanners] = useState([{ numero: 1, inicial: PADRAO_ATIBAIA }]);
+
+  useEffect(() => setLocais(carregarLocais()), []);
+
+  // Vindo do histórico com "Reutilizar dados": o primeiro banner já abre preenchido.
+  useEffect(() => {
+    try {
+      const salvo = sessionStorage.getItem(CHAVE_REUTILIZAR);
+      if (salvo) {
+        sessionStorage.removeItem(CHAVE_REUTILIZAR);
+        // Chave nova para o editor recomeçar com os dados reaproveitados.
+        setBanners([{ numero: 1, chave: "reutilizado", inicial: { ...PADRAO_ATIBAIA, ...JSON.parse(salvo) } }]);
+      }
+    } catch {}
+  }, []);
+
+  // Fundo, logos e fontes precisam estar carregados antes de desenhar.
+  useEffect(() => {
+    const familia = montserrat.style.fontFamily;
+    Promise.all([
+      carregarImagem("/atibaia/fundo.png"),
+      carregarImagem("/atibaia/logos.png"),
+      // Falha ao carregar fonte não deve travar o gerador: cai na fonte reserva.
+      ...[500, 600, 700, 800, 900].map((peso) =>
+        document.fonts.load(`${peso} 40px ${familia}`).catch(() => {})
+      ),
+    ]).then(([fundo, logos]) => setAssets({ fundo, logos, familia }));
+  }, []);
+
+  function atualizarLocais(novos) {
+    setLocais(novos);
+    salvarLocais(novos);
+  }
+
+  function novoBanner() {
+    const numero = Math.max(...banners.map((b) => b.numero)) + 1;
+    setBanners((lista) => [...lista, { numero, inicial: PADRAO_ATIBAIA }]);
+    setTimeout(() => document.getElementById(`banner-${numero}`)?.scrollIntoView({ behavior: "smooth" }), 50);
+  }
+
+  function removerBanner(numero) {
+    if (!confirm(`Remover o banner ${numero} desta página?`)) return;
+    setBanners((lista) => lista.filter((b) => b.numero !== numero));
+  }
+
+  return (
+    <>
+      <Cabecalho />
+      <main className="container">
+        <div className="titulo-pagina">
+          <Link href="/" className="voltar">← Cidades</Link>
+          <h1>Banners de Atibaia</h1>
+          <p>Preencha os dados e veja a prévia na hora. Dá para montar vários banners nesta mesma página.</p>
+        </div>
+
+        {banners.map((b) => (
+          <EditorBanner
+            key={b.chave || b.numero}
+            numero={b.numero}
+            inicial={b.inicial}
+            assets={assets}
+            locais={locais}
+            onLocaisChange={atualizarLocais}
+            onRemover={banners.length > 1 ? () => removerBanner(b.numero) : null}
+          />
+        ))}
+
+        <button type="button" className="novo-banner" onClick={novoBanner}>
+          + Criar outro banner
+        </button>
       </main>
     </>
   );
