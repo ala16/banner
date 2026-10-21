@@ -296,7 +296,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
               <textarea
                 id={`${p}texto-rapido`}
                 aria-label="Texto para preenchimento rápido"
-                rows={2}
+                rows={3}
                 value={textoRapido}
                 placeholder={modelo.exemploRapido}
                 onChange={(e) => setTextoRapido(e.target.value)}
