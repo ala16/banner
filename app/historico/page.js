@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Cabecalho from "../Cabecalho";
 import ListaCursos from "../ListaCursos";
-import { CHAVE_REUTILIZAR, CIDADES } from "@/lib/cidades";
+import { CHAVE_REUTILIZAR, CIDADES, nomesCursos } from "@/lib/cidades";
 
 const formatarData = (iso) =>
   new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -101,7 +101,7 @@ export default function HistoricoPage() {
               <img src={item.imagem} alt={item.dados.curso || "Banner"} loading="lazy" />
             </a>
             <div className="info">
-              <strong>{item.dados.curso || "(sem nome)"}</strong>
+              <strong>{nomesCursos(item.dados).join(" + ") || "(sem nome)"}</strong>
               <small>{item.dados.datas ? `${item.dados.datas} · ` : ""}criado em {formatarData(item.criadoEm)}{item.atualizadoEm ? ` · editado em ${formatarData(item.atualizadoEm)}` : ""}</small>
             </div>
             <div className="botoes">
@@ -114,7 +114,7 @@ export default function HistoricoPage() {
         ))}
       </div>
 
-      {itens?.length > 0 && <ListaCursos titulo="Cursos gerados" cursos={itens.map((i) => i.dados.curso || "")} />}
+      {itens?.length > 0 && <ListaCursos titulo="Cursos gerados" cursos={itens.map((i) => nomesCursos(i.dados).join("\n"))} />}
     </main>
     </>
   );

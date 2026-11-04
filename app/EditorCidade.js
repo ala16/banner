@@ -8,8 +8,8 @@ import ListaCursos from "./ListaCursos";
 import { TAMANHO } from "@/lib/bannerAtibaia";
 import { carregarLocais, salvarLocais } from "@/lib/locais";
 import { PARCEIROS } from "@/lib/parceiros";
-import { CHAVE_REUTILIZAR } from "@/lib/cidades";
-import { preencherDoTexto, separarCursos } from "@/lib/preenchimentoRapido";
+import { CHAVE_REUTILIZAR, nomesCursos } from "@/lib/cidades";
+import { lerDoisCursos, preencherDoTexto, separarCursos } from "@/lib/preenchimentoRapido";
 
 const NOMES_CAMPOS = {
   curso: "curso",
@@ -19,11 +19,17 @@ const NOMES_CAMPOS = {
   local: "local",
   vagas: "vagas",
   idade: "idade",
+  curso2: "2º curso",
+  datas2: "datas do 2º curso",
+  doisCursos: null,
 };
 
 // Lê um curso do texto e devolve só os campos que este modelo mostra no formulário.
 function lerCurso(modelo, texto, locais) {
+  const dois = modelo.campos.doisCursos && lerDoisCursos(texto, locais);
+  if (dois) return dois;
   const achados = preencherDoTexto(texto, locais);
+  if (modelo.campos.doisCursos) achados.doisCursos = false;
   if (!modelo.campos.descricao) delete achados.descricao;
   if (!modelo.campos.vagasIdade) {
     delete achados.vagas;
@@ -111,7 +117,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
 
   // Com um curso por linha, o primeiro fica neste banner e os outros viram banners novos.
   function preencherRapido() {
-    const [primeiro = "", ...outros] = separarCursos(textoRapido);
+    const [primeiro = "", ...outros] = separarCursos(textoRapido, { doisCursos: modelo.campos.doisCursos });
     const achados = lerCurso(modelo, primeiro, locais);
     setDados((d) => ({ ...d, ...achados }));
     setResultadoRapido({ campos: Object.keys(achados), novos: outros.length });
@@ -242,7 +248,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
     return { blob, arquivo };
   };
   useEffect(() => registrar(numero, () => exportarRef.current()), [numero, registrar]);
-  useEffect(() => onCurso(numero, dados.curso), [numero, dados.curso, onCurso]);
+  useEffect(() => onCurso(numero, nomesCursos(dados).join("\n")), [numero, dados, onCurso]);
 
   async function salvarNoHistorico(png, arquivo) {
     setStatusHistorico({ tipo: "info", texto: "Salvando no histórico..." });
@@ -282,7 +288,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
     <section className="banner-bloco" id={`banner-${numero}`}>
       <div className="banner-bloco-topo">
         <h2>
-          Banner {numero}{dados.curso.trim() ? ` · ${dados.curso.trim()}` : ""}
+          Banner {numero}{nomesCursos(dados).length ? ` · ${nomesCursos(dados).join(" + ")}` : ""}
           {edicao && <span className="selo">Editando do histórico</span>}
         </h2>
         {onRemover && (
@@ -313,7 +319,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
               {resultadoRapido && (
                 <p className={`aviso ${resultadoRapido.campos.length ? "ok" : "erro"}`} role="status">
                   {resultadoRapido.campos.length
-                    ? `Preenchido: ${resultadoRapido.campos.map((c) => NOMES_CAMPOS[c]).join(", ")}.`
+                    ? `Preenchido: ${resultadoRapido.campos.map((c) => NOMES_CAMPOS[c]).filter(Boolean).join(", ")}.`
                     : "Não reconheci nenhum dado nesse texto."}
                   {resultadoRapido.novos > 0 &&
                     ` Criei mais ${resultadoRapido.novos} ${resultadoRapido.novos > 1 ? "banners" : "banner"} abaixo com os outros cursos.`}
@@ -323,7 +329,31 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
 
             <fieldset className="secao">
               <legend>Curso</legend>
-              <Campo nome="curso" rotulo="Nome do curso" placeholder="Turismo pedagógico no meio rural" {...campo} />
+              <Campo
+                nome="curso"
+                rotulo={dados.doisCursos ? "Nome do 1º curso" : "Nome do curso"}
+                placeholder="Turismo pedagógico no meio rural"
+                {...campo}
+              />
+              {modelo.campos.doisCursos && (
+                <>
+                  <label className="opcao">
+                    <input
+                      type="checkbox"
+                      checked={dados.doisCursos || false}
+                      onChange={(e) => setDados((d) => ({ ...d, doisCursos: e.target.checked }))}
+                    />
+                    Dois cursos neste banner
+                    <small>(cada um com as suas datas)</small>
+                  </label>
+                  {dados.doisCursos && (
+                    <div className="segundo-curso">
+                      <Campo nome="curso2" rotulo="Nome do 2º curso" placeholder="Inseminação artificial" {...campo} />
+                      <Campo nome="datas2" rotulo="Datas do 2º curso" placeholder="16 a 20 de novembro" {...campo} />
+                    </div>
+                  )}
+                </>
+              )}
               {modelo.campos.descricao && (
                 <div className="campo">
                   <div className="rotulo-com-acao">
@@ -375,11 +405,11 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
               <div className={modelo.datasMultilinha ? "" : "linha linha-datas"}>
                 <Campo
                   nome="datas"
-                  rotulo="Data(s)"
+                  rotulo={dados.doisCursos ? "Datas do 1º curso" : "Data(s)"}
                   placeholder={modelo.exemploDatas}
                   multilinha={modelo.datasMultilinha}
                   rows={modelo.datasMultilinha ? 3 : undefined}
-                  dica={modelo.datasMultilinha ? "Uma turma por linha. O que vem antes do \" - \" fica em negrito." : undefined}
+                  dica={modelo.datasMultilinha && !dados.doisCursos ? "Uma turma por linha. O que vem antes do \" - \" fica em negrito." : undefined}
                   {...campo}
                 />
                 <Campo nome="horario" rotulo="Horário" placeholder="8h00 às 17h00" {...campo} />
