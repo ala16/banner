@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
+import { rpc, supabaseConfigurado } from "@/lib/supabase";
 
-// Repassa a imagem de um banner salvo pelo mesmo domínio, para o editor poder
-// recortá-la no canvas sem bloqueio de CORS. Só aceita URLs do Vercel Blob.
+// Imagem de um banner salvo. Com ?download=1, vem como arquivo para baixar.
 export async function GET(request) {
-  let url;
+  const id = request.nextUrl.searchParams.get("id") || "";
+  if (!/^\d+$/.test(id) || !supabaseConfigurado()) {
+    return NextResponse.json({ erro: "Imagem não encontrada." }, { status: 404 });
+  }
   try {
-    url = new URL(request.nextUrl.searchParams.get("url") || "");
-  } catch {
-    return NextResponse.json({ erro: "URL inválida." }, { status: 400 });
+    const [linha] = await rpc("banner_imagem", { p_id: id });
+    if (!linha) return NextResponse.json({ erro: "Imagem não encontrada." }, { status: 404 });
+    const headers = { "content-type": linha.tipo, "cache-control": "private, max-age=86400" };
+    if (request.nextUrl.searchParams.get("download")) {
+      headers["content-disposition"] = `attachment; filename="${(linha.arquivo || "banner.png").replace(/"/g, "")}"`;
+    }
+    return new NextResponse(Buffer.from(linha.imagem, "base64"), { headers });
+  } catch (e) {
+    return NextResponse.json({ erro: e.message }, { status: 500 });
   }
-  if (url.protocol !== "https:" || !url.hostname.endsWith(".blob.vercel-storage.com")) {
-    return NextResponse.json({ erro: "URL não permitida." }, { status: 400 });
-  }
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return NextResponse.json({ erro: "Imagem não encontrada." }, { status: 404 });
-  return new NextResponse(res.body, {
-    headers: { "content-type": res.headers.get("content-type") || "image/png", "cache-control": "private, max-age=300" },
-  });
 }

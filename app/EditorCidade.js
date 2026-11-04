@@ -127,7 +127,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
   // Editando do histórico: recorta a foto do próprio banner salvo.
   useEffect(() => {
     if (!edicao?.imagemUrl) return;
-    carregarImagem(`/api/historico/imagem?url=${encodeURIComponent(edicao.imagemUrl)}`)
+    carregarImagem(edicao.imagemUrl)
       .then((banner) => {
         const FOTO = modelo.foto;
         const escala = banner.width / TAMANHO;

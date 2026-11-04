@@ -105,7 +105,7 @@ export default function HistoricoPage() {
               <small>{item.dados.datas ? `${item.dados.datas} · ` : ""}criado em {formatarData(item.criadoEm)}{item.atualizadoEm ? ` · editado em ${formatarData(item.atualizadoEm)}` : ""}</small>
             </div>
             <div className="botoes">
-              <a className="botao" href={`${item.imagem}?download=1`}>Baixar</a>
+              <a className="botao" href={`${item.imagem}&download=1`}>Baixar</a>
               <button type="button" className="botao secundario" onClick={() => abrirNoEditor(item, true)}>Editar</button>
               <button type="button" className="botao secundario" onClick={() => abrirNoEditor(item, false)} title="Abre um banner novo com estes dados">Duplicar</button>
               <button type="button" className="botao secundario perigo" onClick={() => apagar(item)}>Apagar</button>
