@@ -10,6 +10,7 @@ import { carregarLocais, salvarLocais } from "@/lib/locais";
 import { PARCEIROS } from "@/lib/parceiros";
 import { CHAVE_REUTILIZAR, nomesCursos } from "@/lib/cidades";
 import { lerDoisCursos, preencherDoTexto, separarCursos } from "@/lib/preenchimentoRapido";
+import { lerMensagemWhatsApp, pareceWhatsApp } from "@/lib/mensagemWhatsApp";
 
 const NOMES_CAMPOS = {
   curso: "curso",
@@ -22,13 +23,28 @@ const NOMES_CAMPOS = {
   curso2: "2º curso",
   datas2: "datas do 2º curso",
   doisCursos: null,
+  telefone: "telefone do sindicato",
+  celular: "celular do sindicato",
+  contatoExtra: "outro contato",
 };
 
 // Lê um curso do texto e devolve só os campos que este modelo mostra no formulário.
+// Texto vindo do WhatsApp ("[17/11/2026, 14:37] Rose: DIAS ...") tem leitor próprio.
 function lerCurso(modelo, texto, locais) {
+  if (pareceWhatsApp(texto)) return camposDoModelo(modelo, lerMensagemWhatsApp(texto, locais));
   const dois = modelo.campos.doisCursos && lerDoisCursos(texto, locais);
   if (dois) return dois;
-  const achados = preencherDoTexto(texto, locais);
+  return camposDoModelo(modelo, preencherDoTexto(texto, locais));
+}
+
+function camposDoModelo(modelo, achados) {
+  // "CONTATO NOSSO": telefones padrão do sindicato.
+  if (achados.contatoSindicato) {
+    for (const nome of (modelo.telefones || [{ nome: "telefone" }]).map((t) => t.nome)) achados[nome] = modelo.padrao[nome];
+  }
+  delete achados.contatoSindicato;
+  delete achados.gratuito;
+  if (!modelo.campos.contatoExtra) delete achados.contatoExtra;
   if (modelo.campos.doisCursos) achados.doisCursos = false;
   if (!modelo.campos.descricao) delete achados.descricao;
   if (!modelo.campos.vagasIdade) {
@@ -117,7 +133,10 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
 
   // Com um curso por linha, o primeiro fica neste banner e os outros viram banners novos.
   function preencherRapido() {
-    const [primeiro = "", ...outros] = separarCursos(textoRapido, { doisCursos: modelo.campos.doisCursos });
+    // Mensagens do WhatsApp: a conversa inteira é um curso só.
+    const [primeiro = "", ...outros] = pareceWhatsApp(textoRapido)
+      ? [textoRapido]
+      : separarCursos(textoRapido, { doisCursos: modelo.campos.doisCursos });
     const achados = lerCurso(modelo, primeiro, locais);
     setDados((d) => ({ ...d, ...achados }));
     setResultadoRapido({ campos: Object.keys(achados), novos: outros.length });
@@ -314,7 +333,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
                 <button type="button" className="botao" onClick={preencherRapido} disabled={!textoRapido.trim()}>
                   Preencher campos
                 </button>
-                <small>Reconhece curso, datas, local{modelo.campos.vagasIdade ? ", vagas, idade" : ""} e horário. Vários cursos, um por linha, viram vários banners.</small>
+                <small>Reconhece curso, datas, local{modelo.campos.vagasIdade ? ", vagas, idade" : ""} e horário. Vários cursos, um por linha, viram vários banners. Também aceita as mensagens copiadas do WhatsApp.</small>
               </div>
               {resultadoRapido && (
                 <p className={`aviso ${resultadoRapido.campos.length ? "ok" : "erro"}`} role="status">
@@ -378,6 +397,15 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
                     <Campo key={t.nome} nome={t.nome} rotulo={t.rotulo} inputMode="tel" {...campo} />
                   ))}
                 </div>
+              )}
+              {modelo.campos.contatoExtra && (
+                <Campo
+                  nome="contatoExtra"
+                  rotulo="Outro contato (opcional)"
+                  placeholder="Igreja - 11 99505-4702"
+                  dica="Aparece no banner como “Contato”, embaixo do local."
+                  {...campo}
+                />
               )}
               {modelo.campos.vagasIdade && modelo.campos.contato && (
                 <>
