@@ -461,6 +461,25 @@ input:focus, textarea:focus, select:focus {
 .imagem-linha .upload { flex: 1; min-height: 0; padding: 8px 10px; gap: 0; }
 .imagem-linha .upload strong { font-size: 0.88rem; }
 .imagem-linha .upload span { font-size: 0.75rem; }
+.colar {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border: 2px dashed var(--borda);
+  border-radius: 10px;
+  background: #fafcf9;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.colar:hover { border-color: var(--verde-claro); }
+.colar:focus { border-style: solid; border-color: var(--verde-claro); background: #eef7ea; color: var(--verde-escuro); }
+.colar .colar-pronto, .colar:focus .colar-normal { display: none; }
+.colar:focus .colar-pronto { display: inline; }
+.colar kbd { padding: 0 5px; border: 1px solid var(--borda); border-bottom-width: 2px; border-radius: 4px; background: #fff; font: inherit; font-size: 0.75rem; }
 .botao-gerar-imagem { flex-shrink: 0; padding: 8px 12px; font-size: 0.88rem; }
 .formulario .secao > .link-acao { margin-top: 6px; font-size: 0.82rem; }
 .preview .acoes { margin-top: 12px; }

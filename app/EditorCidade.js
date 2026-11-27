@@ -99,6 +99,24 @@ function LocaisSalvos({ locais, padrao, onChange, onFechar }) {
 }
 
 // Um banner completo: formulário, prévia e download. A página pode ter vários.
+// Ctrl+V fora de um campo de texto vai para o banner em que a pessoa mexeu por último.
+const editoresAbertos = new Set();
+let editorAtivo = null;
+const editorDaVez = () => (editoresAbertos.has(editorAtivo) ? editorAtivo : Math.min(...editoresAbertos));
+
+function imagemDaAreaDeTransferencia(e) {
+  const itens = [...(e.clipboardData?.items || [])];
+  const item = itens.find((i) => i.kind === "file" && i.type.startsWith("image/"));
+  return item?.getAsFile() || null;
+}
+
+function digitandoTexto() {
+  const el = document.activeElement;
+  if (!el) return false;
+  if (el.isContentEditable || el.tagName === "TEXTAREA" || el.tagName === "SELECT") return true;
+  return el.tagName === "INPUT" && !["file", "checkbox", "radio", "button", "submit"].includes(el.type);
+}
+
 function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locais, onLocaisChange, onRemover, registrar, onCurso }) {
   const canvasRef = useRef(null);
   const [dados, setDados] = useState(inicial);
@@ -112,6 +130,7 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
   const [nomeFoto, setNomeFoto] = useState("");
   const [arrastando, setArrastando] = useState(false);
   const inputFotoRef = useRef(null);
+  const [avisoColar, setAvisoColar] = useState("");
   const [textoRapido, setTextoRapido] = useState("");
   const [resultadoRapido, setResultadoRapido] = useState(null);
 
@@ -153,16 +172,42 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
 
   const alterar = (e) => setDados((d) => ({ ...d, [e.target.name]: e.target.value }));
 
-  function usarFoto(arquivo) {
+  function usarFoto(arquivo, nome = arquivo?.name) {
     if (!arquivo || !arquivo.type.startsWith("image/")) return;
     const url = URL.createObjectURL(arquivo);
     carregarImagem(url)
       .then((img) => {
         setFoto(img);
-        setNomeFoto(arquivo.name);
+        setNomeFoto(nome);
+        if (inputFotoRef.current) inputFotoRef.current.value = "";
       })
       .finally(() => URL.revokeObjectURL(url));
   }
+
+  function colarImagem(e) {
+    const arquivo = imagemDaAreaDeTransferencia(e);
+    if (!arquivo) return false;
+    e.preventDefault();
+    usarFoto(arquivo, "Imagem colada");
+    setAvisoColar("Imagem colada no banner.");
+    return true;
+  }
+
+  // Ctrl+V em qualquer lugar da página (fora de campos de texto).
+  const colarRef = useRef(null);
+  colarRef.current = colarImagem;
+  useEffect(() => {
+    editoresAbertos.add(numero);
+    function aoColar(e) {
+      if (e.defaultPrevented || digitandoTexto() || editorDaVez() !== numero) return;
+      colarRef.current(e);
+    }
+    document.addEventListener("paste", aoColar);
+    return () => {
+      editoresAbertos.delete(numero);
+      document.removeEventListener("paste", aoColar);
+    };
+  }, [numero]);
 
   const [gerandoDescricao, setGerandoDescricao] = useState(false);
   const [gerandoImagem, setGerandoImagem] = useState(false);
@@ -285,7 +330,12 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
   const campo = { dados, onChange: alterar, prefixo: p };
 
   return (
-    <section className="banner-bloco" id={`banner-${numero}`}>
+    <section
+      className="banner-bloco"
+      id={`banner-${numero}`}
+      onPointerDownCapture={() => (editorAtivo = numero)}
+      onFocusCapture={() => (editorAtivo = numero)}
+    >
       <div className="banner-bloco-topo">
         <h2>
           Banner {numero}{nomesCursos(dados).length ? ` · ${nomesCursos(dados).join(" + ")}` : ""}
@@ -540,6 +590,22 @@ function EditorBanner({ modelo, onVarios, numero, inicial, edicao, assets, locai
                 >
                   {gerandoImagem ? "Gerando (até 1 min)..." : "✨ Gerar com IA"}
                 </button>
+              </div>
+              <div
+                className="colar"
+                tabIndex={0}
+                role="button"
+                aria-label="Colar imagem: clique aqui e aperte Ctrl+V"
+                onPaste={(e) => {
+                  if (!colarImagem(e)) {
+                    e.preventDefault();
+                    setAvisoColar("Não achei imagem para colar. Copie a imagem e tente de novo.");
+                  }
+                }}
+                onBlur={() => setAvisoColar("")}
+              >
+                <span className="colar-normal">📋 Clique aqui e aperte <kbd>Ctrl</kbd>+<kbd>V</kbd> para colar uma imagem</span>
+                <span className="colar-pronto">{avisoColar || <>Pronto! Agora aperte <kbd>Ctrl</kbd>+<kbd>V</kbd></>}</span>
               </div>
               {foto && (
                 <button type="button" className="link-acao perigo" onClick={removerFoto}>Remover imagem</button>
